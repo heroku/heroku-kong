@@ -1,4 +1,5 @@
 -- app.rockspec
 dependencies = {
-  "etlua"
+  "etlua",
+  "kong ~> 0.5"
 }
