@@ -1,2 +1,2 @@
-https://github.com/ddollar/heroku-buildpack-apt
+https://github.com/ddollar/heroku-buildpack-apt#usr-local-paths
 http://github.com/leafo/heroku-buildpack-lua
