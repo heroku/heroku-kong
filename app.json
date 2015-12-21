@@ -1,0 +1,16 @@
+{
+  "name": "Kong",
+  "description": "The open-source management layer for APIs, delivering high performance and reliability.",
+  "keywords": [
+    "api",
+    "microservice",
+    "nginx",
+    "openresty",
+    "lua",
+    "management"
+  ],
+  "website": "https://getkong.org/",
+  "repository": "https://github.com/heroku/heroku-kong.git",
+  "logo": "http://i.imgur.com/4jyQQAZ.png",
+  "success_url": "http://getkong.org/docs/latest/getting-started/quickstart/"
+}

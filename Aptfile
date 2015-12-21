@@ -1,0 +1,6 @@
+install
+netcat
+openssl
+libpcre3
+dnsmasq
+https://github.com/Mashape/kong/releases/download/0.5.4/kong-0.5.4.trusty_all.deb

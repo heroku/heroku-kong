@@ -1,0 +1,4 @@
+-- app.rockspec
+dependencies = {
+  "etlua"
+}
