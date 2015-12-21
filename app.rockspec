@@ -1,11 +1,15 @@
 -- app.rockspec
 config = {
   external_deps_dirs = {
-   "/app/.apt/usr/lib/x86_64-linux-gnu",
-   "/app/.apt/usr/local/lib",
-   "/app/.apt/usr/lib",
-   "/usr/lib/x86_64-linux-gnu",
-   "/usr/lib"
+   "/app/.apt/usr/local",
+   "/app/.apt/usr",
+   "/usr"
+  },
+  external_deps_subdirs = {
+    "bin",
+    "include",
+    "lib",
+    "lib/x86_64-linux-gnu"
   }
 }
 dependencies = {
