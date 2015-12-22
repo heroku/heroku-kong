@@ -1,6 +1,5 @@
-Kong
-====
+Kong Heroku app
+===============
 
-**Non-functional**: reference only.
+[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/heroku/heroku-kong)
 
-This was an experiment using the existing Lua buildpack to run Kong. Unfortunately the prebuilt Lua & LuaRocks binaries' were built with the prefix `/usr/local` which is not compatible with the dynos' read-only root filesystem.

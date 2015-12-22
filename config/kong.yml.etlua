@@ -1,3 +1,5 @@
+# Kong app config template
+
 ## Available plugins on this server
 plugins_available:
   - ssl
@@ -22,7 +24,7 @@ plugins_available:
 
 ## The Kong working directory
 ## (Make sure you have read and write permissions)
-nginx_working_dir: /usr/local/kong/
+nginx_working_dir: /app/nginx-working
 
 ## Port configuration
 proxy_port: <%= proxy_port %>
