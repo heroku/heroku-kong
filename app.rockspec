@@ -11,12 +11,11 @@ config = {
     include = "include",
     lib = {"lib", "lib/x86_64-linux-gnu"}
   },
-  rocks_trees = {
-    { name = [[system]], root = [[/app/.apt/usr/local]] }
-  },
-  variables = {
-    LUA_BINDIR = "/app/.apt/usr/local/bin"
-  }
+  root_dir = "/app/.apt/usr/local",
+  rocks_dir = "/app/.apt/usr/local/lib/luarocks/rocks",
+  deploy_bin_dir = "/app/.apt/usr/local/bin",
+  deploy_lua_dir = "/app/.apt/usr/local/lib/lua/5.1",
+  deploy_lib_dir = "/app/.apt/usr/local/lib"
 }
 dependencies = {
   "etlua",
