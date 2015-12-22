@@ -12,7 +12,6 @@ config = {
     lib = {"lib", "lib/x86_64-linux-gnu"}
   },
   rocks_trees = {
-    { name = [[user]], root = home..[[/.luarocks]] },
     { name = [[system]], root = [[/app/.apt/usr/local]] }
   }
 }
