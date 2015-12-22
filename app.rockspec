@@ -13,6 +13,9 @@ config = {
   },
   rocks_trees = {
     { name = [[system]], root = [[/app/.apt/usr/local]] }
+  },
+  variables: {
+    LUA_BINDIR = "/app/.apt/usr/local/bin"
   }
 }
 dependencies = {
