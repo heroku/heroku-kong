@@ -20,7 +20,7 @@ kong-12f && kong start -c config/kong.yml
 
 * web (start Kong): `kong-12f && kong start -c config/kong.yml`
 * shell (interactive CLI): `heroku run kong-12f && bash`
-* initialize DB schema (interactive CLI): `heroku run kong-12f && kong migrations reset`
+* initialize DB schema (interactive CLI): `heroku run kong-12f && kong migrations reset -c config/kong.yml`
 
 ### Environment
 
