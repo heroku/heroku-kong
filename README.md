@@ -11,10 +11,18 @@ Running
 
 Execute `kong-12f` before every run, to configure using environment variables.
 
-For example, the default web process is:
+For example, the [Kong buildpack release](https://github.com/heroku/heroku-buildpack-kong/bin/release) runs:
 ```
 kong-12f && kong start -c config/kong.yml
 ```
+
+### Commands
+
+* web (start Kong): `kong-12f && kong start -c config/kong.yml`
+* shell (interactive CLI): `heroku run kong-12f && bash`
+* initialize DB schema (interactive CLI): `heroku run kong-12f && kong migrations reset`
+
+### Environment
 
 * Kong config via environment variables
   * `CASSANDRA_URL`
