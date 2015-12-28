@@ -36,3 +36,19 @@ kong-12f && kong start -c config/kong.yml
 * Exposes a single service per instance (app/dyno)
   * `KONG_EXPOSE=proxy` for the gateway (default)
   * `KONG_EXPOSE=admin` for the Admin API
+
+
+### Protecting the Admin API
+Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
+
+#### Heroku public cloud
+Within a one-off dyno console, start Kong and connect to the localhost-only port.
+
+```
+$ heroku run bash
+> KONG_EXPOSE=admin PORT=8000 kong-12f && kong start -c config/kong.yml &
+> curl localhost:8000
+```
+
+#### Heroku Private Space
+Run a secondary app with `KONG_EXPOSE=admin` config var, and use inbound IP restrictions (once support is available) to restrict network exposure.
