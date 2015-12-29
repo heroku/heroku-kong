@@ -29,7 +29,8 @@ nginx_working_dir: /app/nginx-working
 ## Port configuration
 proxy_port: <%= proxy_port %>
 proxy_ssl_port: <%= proxy_ssl_port %>
-admin_api_port: <%= admin_api_port %>
+#admin_api_port: <%= admin_api_port %>
+admin_api_port: 8001
 
 ## Secondary port configuration
 dnsmasq_port: <%= dnsmasq_port %>

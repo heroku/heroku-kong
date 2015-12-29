@@ -24,35 +24,29 @@ kong-12f && kong start -c config/kong.yml
 
 ### Environment
 
-* Kong config via environment variables
-  * `CASSANDRA_URL`
-  * `CASSANDRA_TRUSTED_CERT`
-  * `PORT`
-  * `KONG_EXPOSE`
-* Parses the `CASSANDRA_URL` as a comma-delimited list of contact points with the format:
-  ```
-  cassandra://username:password@x.x.x.x:port/keyspace,cassandra://username:password@y.y.y.y:port/keyspace
-  ```
-* Exposes a single service per instance (app/dyno)
-  * `KONG_EXPOSE=proxy` for the gateway (default)
-  * `KONG_EXPOSE=admin` for the Admin API
+Kong is configured via environment vars:
 
+* `CASSANDRA_URL`
+* `CASSANDRA_TRUSTED_CERT`
+* `PORT`
 
 ### Protecting the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
 
-#### Heroku public cloud
-Within a one-off dyno console, start Kong and connect to the localhost-only port.
+For Kong on Heroku, the Admin API listens on the dyno's localhost port 8001; set in [`config/kong.yml.etlua`](/heroku/heroku-kong/blob/master/config/kong.yml.etlua) `admin_api_port`.
+
+### Access via Heroku console
+In a one-off dyno console, start Kong, and make requests to the Admin API:
 
 ```bash
 $ heroku run bash
-> KONG_EXPOSE=admin PORT=8000 kong-12f && kong start -c config/kong.yml &
+> kong-12f && kong start -c config/kong.yml &
 # …Kong will start in the background, still writing to the console.
-> curl localhost:8000
+> curl localhost:8001
 ```
 
-#### Heroku Private Space
-Run a secondary app with `KONG_EXPOSE=admin` config var, and use inbound IP restrictions (once support is available) to restrict network exposure.
+### Authenticated Admin API
+From the Heroku console, you may bootstrap an authenticated, rate-limited, proxy to the Admin API.
 
 
 ### Demo: [API Rate Limiting](https://getkong.org/plugins/rate-limiting/)
