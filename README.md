@@ -52,3 +52,16 @@ $ heroku run bash
 
 #### Heroku Private Space
 Run a secondary app with `KONG_EXPOSE=admin` config var, and use inbound IP restrictions (once support is available) to restrict network exposure.
+
+
+### Demo: [API Rate Limiting](https://getkong.org/plugins/rate-limiting/)
+
+Request [this Bay Lights API](https://kong-proxy-public.herokuapp.com/bay-lights/lights) more than five times in a minute, and you'll get **HTTP Status 429: API rate limit exceeded**, along with `X-Ratelimit-Limit-Minute` & `X-Ratelimit-Remaining-Minute` headers to help the API consumers regulate their usage.
+
+The whole configuration for this API rate limiter is:
+```
+$ curl -i -X POST --url http://localhost:8000/apis/ --data 'name=bay-lights' --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/' --data 'request_path=/bay-lights' --data 'strip_request_path=true'
+$ curl -i -X POST --url http://localhost:8000/apis/bay-lights/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
+$ curl -i -X POST --url http://localhost:8000/apis/bay-lights/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
+```
+
