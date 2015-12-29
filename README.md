@@ -61,7 +61,18 @@ Request [this Bay Lights API](https://kong-proxy-public.herokuapp.com/bay-lights
 
 Try it in your shell terminal:
 ```bash
-curl https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+# HTTP/1.1 200 OK
+curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+# HTTP/1.1 200 OK
+curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+# HTTP/1.1 200 OK
+curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+# HTTP/1.1 200 OK
+curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+# HTTP/1.1 200 OK
+curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+# HTTP/1.1 429
 ```
 
 Here's the whole configuration for this API rate limiter:
