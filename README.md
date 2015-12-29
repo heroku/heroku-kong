@@ -44,9 +44,10 @@ Kong's Admin API has no built-in authentication. Its exposure must be limited to
 #### Heroku public cloud
 Within a one-off dyno console, start Kong and connect to the localhost-only port.
 
-```
+```bash
 $ heroku run bash
 > KONG_EXPOSE=admin PORT=8000 kong-12f && kong start -c config/kong.yml &
+# …Kong will start in the background, still writing to the console.
 > curl localhost:8000
 ```
 
@@ -58,10 +59,18 @@ Run a secondary app with `KONG_EXPOSE=admin` config var, and use inbound IP rest
 
 Request [this Bay Lights API](https://kong-proxy-public.herokuapp.com/bay-lights/lights) more than five times in a minute, and you'll get **HTTP Status 429: API rate limit exceeded**, along with `X-Ratelimit-Limit-Minute` & `X-Ratelimit-Remaining-Minute` headers to help the API consumers regulate their usage.
 
-The whole configuration for this API rate limiter is:
+Try it in your shell terminal:
+```bash
+curl https://kong-proxy-public.herokuapp.com/bay-lights/lights
 ```
-$ curl -i -X POST --url http://localhost:8000/apis/ --data 'name=bay-lights' --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/' --data 'request_path=/bay-lights' --data 'strip_request_path=true'
-$ curl -i -X POST --url http://localhost:8000/apis/bay-lights/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
-$ curl -i -X POST --url http://localhost:8000/apis/bay-lights/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
+
+Here's the whole configuration for this API rate limiter:
+
+*Commands run via the [protected Admin API within Heroku's public cloud](#heroku-public-cloud)*
+
+```bash
+curl -i -X POST --url http://localhost:8000/apis/ --data 'name=bay-lights' --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/' --data 'request_path=/bay-lights' --data 'strip_request_path=true'
+curl -i -X POST --url http://localhost:8000/apis/bay-lights/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
+curl -i -X POST --url http://localhost:8000/apis/bay-lights/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
 ```
 
