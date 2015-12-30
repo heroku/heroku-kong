@@ -35,7 +35,7 @@ Kong's Admin API has no built-in authentication. Its exposure must be limited to
 
 For Kong on Heroku, the Admin API listens on the dyno's localhost port 8001; set in [`config/kong.yml.etlua`](/heroku/heroku-kong/blob/master/config/kong.yml.etlua) `admin_api_port`.
 
-### Access via Heroku console
+#### Access via Heroku console
 In a one-off dyno console, start Kong, and make requests to the Admin API:
 
 ```bash
@@ -45,8 +45,8 @@ $ heroku run bash
 > curl localhost:8001
 ```
 
-### Authenticated Admin API
-From the Heroku console, you may bootstrap an authenticated, rate-limited, proxy to the Admin API.
+#### Authenticated Admin API
+Using Kong itself, you may expose an authenticated, rate-limited, proxy to the Admin API.
 
 
 ### Demo: [API Rate Limiting](https://getkong.org/plugins/rate-limiting/)
@@ -74,8 +74,8 @@ Here's the whole configuration for this API rate limiter:
 *Commands run via the [protected Admin API within Heroku's public cloud](#heroku-public-cloud)*
 
 ```bash
-curl -i -X POST --url http://localhost:8000/apis/ --data 'name=bay-lights' --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/' --data 'request_path=/bay-lights' --data 'strip_request_path=true'
-curl -i -X POST --url http://localhost:8000/apis/bay-lights/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
-curl -i -X POST --url http://localhost:8000/apis/bay-lights/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
+curl -i -X POST --url http://localhost:8001/apis/ --data 'name=bay-lights' --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/' --data 'request_path=/bay-lights' --data 'strip_request_path=true'
+curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
+curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
 ```
 
