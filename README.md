@@ -24,7 +24,7 @@ kong-12f && kong start -c config/kong.yml
 
 ### Configuration
 
-Kong is configured at runtime with the `kong-12f` command, which renders the config file [`config/kong.yml.etlua`](https://github.com/heroku/heroku-kong/blob/master/config/kong.yml.etlua) each time.
+Kong is configured at runtime with the `kong-12f` command, which renders the config file [`config/kong.yml.etlua`](config/kong.yml.etlua) each time.
 
 Revise `config/kong.yml.etlua` to suite your application. See: [Kong 0.5 Configuration Reference](https://getkong.org/docs/0.5.x/configuration/)
 
@@ -40,7 +40,7 @@ Kong's Admin API has no built-in authentication. Its exposure must be limited to
 
 For Kong on Heroku, the Admin API listens on the dyno's localhost port 8001.
 
-That's the `admin_api_port` set in [`config/kong.yml.etlua`](https://github.com/heroku/heroku-kong/blob/master/config/kong.yml.etlua).
+That's the `admin_api_port` set in [`config/kong.yml.etlua`](config/kong.yml.etlua).
 
 #### Access via Heroku console
 In a one-off dyno console, start Kong, and make requests to the Admin API:
