@@ -1,2 +1,2 @@
 https://github.com/timshadel/heroku-buildpack-github-netrc
-https://github.com/heroku/heroku-buildpack-kong
+https://github.com/heroku/heroku-buildpack-kong#v0.9.0-alpha
