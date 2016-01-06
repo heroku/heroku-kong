@@ -35,6 +35,23 @@ Revise `config/kong.yml.etlua` to suite your application. See: [Kong 0.5 Configu
 * `PORT`
 * `KONG_EXPOSE`
 
+### Plugins
+[Kong/Nginx plugins](https://getkong.org/docs/0.5.x/plugin-development/) may be loaded using the following method:
+
+  * Install via Lua source or rock:
+    * Source modules in the app's `lib/` named like:
+      * `lib/{NAME}.lua` or
+      * `lib/{NAME}/init.lua`
+    * Rocks specified in the app's `.luarocks` file:
+
+      Each line is `{NAME} {VERSION}`. Example:
+
+      ```
+xml 1.1.3-1
+serpent 0.27-1
+      ```
+  * Add each module name to the `plugins_available` list in `config/kong.yml.etlua` 
+
 ### Protecting the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
 
