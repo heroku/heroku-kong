@@ -35,22 +35,23 @@ Revise `config/kong.yml.etlua` to suite your application. See: [Kong 0.5 Configu
 * `PORT`
 * `KONG_EXPOSE`
 
-### Plugins
-[Kong/Nginx plugins](https://getkong.org/docs/0.5.x/plugin-development/) may be loaded using the following method:
+### Kong plugins & additional Lua modules
 
-  * Install via Lua source or rock:
-    * Source modules in the app's `lib/` named like:
+  * Lua source
+    * [Kong plugins](https://getkong.org/docs/0.5.x/plugin-development/):
+      * `lib/kong/plugins/{NAME}`
+      * See: [Plugin File Structure](https://getkong.org/docs/0.5.x/plugin-development/file-structure/)
+    * Other Lua modules:
       * `lib/{NAME}.lua` or
       * `lib/{NAME}/init.lua`
-    * Rocks specified in the app's `.luarocks` file:
+  * Lua rocks: specify in the app's `.luarocks` file.
 
-      Each line is `{NAME} {VERSION}`. Example:
+    Each line is `{NAME} {VERSION}`. Example:
 
-      ```
-xml 1.1.3-1
-serpent 0.27-1
-      ```
-  * Add each module name to the `plugins_available` list in `config/kong.yml.etlua` 
+    ```
+date 2.1.2-1
+    ```
+  * Add each Kong plugin name to the `plugins_available` list in `config/kong.yml.etlua` 
 
 ### Protecting the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
@@ -125,3 +126,16 @@ curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'nam
 curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
 ```
 
+
+### Local Development
+
+On Mac OS X:
+1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
+1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da)
+1. In the shell terminal:
+  1. `source .profile.local` to set Lua search path in the local env
+  1. `./bin/install-luarocks` to locally install rocks specified in the `.luarocks` file
+  1. `cqlsh`
+    * `CREATE KEYSPACE heroku_kong_dev WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};`
+  1. `kong migrations reset -c config/kong-local.yml`
+  1. `kong start -c config/kong-local.yml`

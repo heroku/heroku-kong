@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -eu
+
+LUAROCKS_SPEC=.luarocks
+
+# Newline is the internal field separator
+IFS=$'\n'
+
+if [ -f "$LUAROCKS_SPEC" ]
+then
+  for ROCK in $(cat "$LUAROCKS_SPEC"); do
+    # eval expands the variable into multiple args
+    eval luarocks install --local $ROCK
+  done
+fi
+
+unset IFS
