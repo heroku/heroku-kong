@@ -141,8 +141,7 @@ To work with Kong locally on Mac OS X.
 
 #### Running
 
-1. `source .profile.local` to setup search paths in the local env
-1. `kong start -c config/kong_DEVELOPMENT.yml`
+* Execute `./bin/start`
 
 #### Testing
 
