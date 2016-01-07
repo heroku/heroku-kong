@@ -140,5 +140,15 @@ On Mac OS X:
   1. `./bin/install-luarocks` to locally install rocks specified in the `.luarocks` file
   1. `cqlsh`
     * `CREATE KEYSPACE heroku_kong_dev WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};`
-  1. `kong migrations reset -c config/kong-local.yml`
-  1. `kong start -c config/kong-local.yml`
+  1. `kong migrations reset -c config/kong_DEVELOPMENT.yml`
+  1. `kong start -c config/kong_DEVELOPMENT.yml`
+
+#### Testing
+
+```bash
+# First time, install dependencies.
+./bin/install-luarocks
+
+# Run specs.
+ ~/.luarocks/bin/busted
+```
