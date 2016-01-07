@@ -141,7 +141,7 @@ To work with Kong locally on Mac OS X.
 
 #### Running
 
-1. `source .profile.local` to set Lua search path in the local env
+1. `source .profile.local` to setup search paths in the local env
 1. `kong start -c config/kong_DEVELOPMENT.yml`
 
 #### Testing
@@ -151,4 +151,4 @@ Any test-specific Lua rocks should be specified in `.luarocks_test` file, so tha
 1. Add tests in `spec/`
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
   * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
-1. Run the tests `~/.luarocks/bin/busted`
+1. Execute `busted` to run the tests
