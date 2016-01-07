@@ -2,13 +2,24 @@
 set -eu
 
 LUAROCKS_SPEC=.luarocks
+LUAROCKS_TEST_SPEC=.luarocks_test
 
 # Newline is the internal field separator
 IFS=$'\n'
 
 if [ -f "$LUAROCKS_SPEC" ]
 then
+  echo "-----> Installing Lua Rocks for app"
   for ROCK in $(cat "$LUAROCKS_SPEC"); do
+    # eval expands the variable into multiple args
+    eval luarocks install --local $ROCK
+  done
+fi
+
+if [ -f "$LUAROCKS_TEST_SPEC" ]
+then
+  echo "-----> Installing Lua Rocks for tests"
+  for ROCK in $(cat "$LUAROCKS_TEST_SPEC"); do
     # eval expands the variable into multiple args
     eval luarocks install --local $ROCK
   done

@@ -46,7 +46,7 @@ Revise `config/kong.yml.etlua` to suite your application. See: [Kong 0.5 Configu
       * `lib/{NAME}/init.lua`
   * Lua rocks: specify in the app's `.luarocks` file.
 
-    Each line is `{NAME} {VERSION}`. Example:
+    Each line is passed as args to `luarocks install`. Example:
 
     ```
 date 2.1.2-1
@@ -131,14 +131,23 @@ curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'nam
 
 ### Local Development
 
-On Mac OS X:
+To work with Kong locally on Mac OS X.
+
+#### Setup
 
 1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
 1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da)
-1. In the shell terminal:
-  1. `source .profile.local` to set Lua search path in the local env
-  1. `./bin/install-luarocks` to locally install rocks specified in the `.luarocks` file
-  1. `cqlsh`
-    * `CREATE KEYSPACE heroku_kong_dev WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};`
-  1. `kong migrations reset -c config/kong-local.yml`
-  1. `kong start -c config/kong-local.yml`
+1. Execute `./bin/setup`
+
+#### Running
+
+* Execute `./bin/start`
+
+#### Testing
+
+Any test-specific Lua rocks should be specified in `.luarocks_test` file, so that they are not installed when the app is deployed.
+
+1. Add tests in `spec/`
+  * Uses the [Busted testing framework](http://olivinelabs.com/busted)
+  * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
+1. Execute `busted` to run the tests
