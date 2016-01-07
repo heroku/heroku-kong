@@ -46,7 +46,7 @@ Revise `config/kong.yml.etlua` to suite your application. See: [Kong 0.5 Configu
       * `lib/{NAME}/init.lua`
   * Lua rocks: specify in the app's `.luarocks` file.
 
-    Each line is `{NAME} {VERSION}`. Example:
+    Each line is passed as args to `luarocks install`. Example:
 
     ```
 date 2.1.2-1
@@ -144,6 +144,8 @@ On Mac OS X:
   1. `kong start -c config/kong_DEVELOPMENT.yml`
 
 #### Testing
+
+Any test-specific Lua rocks should be specified in `.luarocks-test` file, so that they are not installed when the app is deployed.
 
 ```bash
 # First time, install dependencies.
