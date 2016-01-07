@@ -35,6 +35,24 @@ Revise `config/kong.yml.etlua` to suite your application. See: [Kong 0.5 Configu
 * `PORT`
 * `KONG_EXPOSE`
 
+### Kong plugins & additional Lua modules
+
+  * Lua source
+    * [Kong plugins](https://getkong.org/docs/0.5.x/plugin-development/):
+      * `lib/kong/plugins/{NAME}`
+      * See: [Plugin File Structure](https://getkong.org/docs/0.5.x/plugin-development/file-structure/)
+    * Other Lua modules:
+      * `lib/{NAME}.lua` or
+      * `lib/{NAME}/init.lua`
+  * Lua rocks: specify in the app's `.luarocks` file.
+
+    Each line is `{NAME} {VERSION}`. Example:
+
+    ```
+date 2.1.2-1
+    ```
+  * Add each Kong plugin name to the `plugins_available` list in `config/kong.yml.etlua` 
+
 ### Protecting the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
 
@@ -106,5 +124,21 @@ Here's the whole configuration for this API rate limiter:
 curl -i -X POST --url http://localhost:8001/apis/ --data 'name=bay-lights' --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/' --data 'request_path=/bay-lights' --data 'strip_request_path=true'
 curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
 curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
+# Demo loading app-specific Kong plugins & Lua modules.
+curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=hello-world-header'
 ```
 
+
+### Local Development
+
+On Mac OS X:
+
+1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
+1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da)
+1. In the shell terminal:
+  1. `source .profile.local` to set Lua search path in the local env
+  1. `./bin/install-luarocks` to locally install rocks specified in the `.luarocks` file
+  1. `cqlsh`
+    * `CREATE KEYSPACE heroku_kong_dev WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};`
+  1. `kong migrations reset -c config/kong-local.yml`
+  1. `kong start -c config/kong-local.yml`

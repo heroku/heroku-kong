@@ -25,16 +25,15 @@ plugins_available:
 
 ## The Kong working directory
 ## (Make sure you have read and write permissions)
-nginx_working_dir: /app/nginx-working
+nginx_working_dir: /usr/local/var/kong
 
 ## Port configuration
-proxy_port: <%= proxy_port %>
-proxy_ssl_port: <%= proxy_ssl_port %>
-#admin_api_port: <%= admin_api_port %>
+proxy_port: 8000
+proxy_ssl_port: 8443
 admin_api_port: 8001
 
 ## Secondary port configuration
-dnsmasq_port: <%= dnsmasq_port %>
+dnsmasq_port: 8053
 
 ## Specify the DAO to use
 database: cassandra
@@ -44,17 +43,10 @@ databases_available:
   cassandra:
     properties:
       contact_points:
-<% for i, host in pairs(cassandra_hosts) do -%>
-        - "<%= host %>"
-<% end -%>
-      user: "<%= cassandra_user %>"
-      password: "<%= cassandra_password %>"
-      keyspace: "<%= cassandra_keyspace %>"
+        - "127.0.0.1:9042"
+      keyspace: "heroku_kong_dev"
       timeout: 1000
       keepalive: 60000 # in milliseconds
-      ssl: true
-      ssl_verify: true
-      ssl_certificate: "/<%= cassandra_cert %>"
 
 ## Cassandra cache configuration
 database_cache_expiration: 5 # in seconds
