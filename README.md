@@ -148,10 +148,7 @@ To work with Kong locally on Mac OS X.
 
 Any test-specific Lua rocks should be specified in `.luarocks-test` file, so that they are not installed when the app is deployed.
 
-```bash
-# First time, install dependencies.
-./bin/setup
-
-# Run specs.
- ~/.luarocks/bin/busted
-```
+1. Add tests in `spec/`
+  * Uses the [Busted testing framework](http://olivinelabs.com/busted)
+  * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
+1. Run the tests `~/.luarocks/bin/busted`
