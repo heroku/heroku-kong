@@ -131,17 +131,18 @@ curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'nam
 
 ### Local Development
 
-On Mac OS X:
+To work with Kong locally on Mac OS X.
+
+#### Setup
 
 1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
 1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da)
-1. In the shell terminal:
-  1. `source .profile.local` to set Lua search path in the local env
-  1. `./bin/install-luarocks` to locally install rocks specified in the `.luarocks` file
-  1. `cqlsh`
-    * `CREATE KEYSPACE heroku_kong_dev WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};`
-  1. `kong migrations reset -c config/kong_DEVELOPMENT.yml`
-  1. `kong start -c config/kong_DEVELOPMENT.yml`
+1. Execute `./bin/setup`
+
+#### Running
+
+1. `source .profile.local` to set Lua search path in the local env
+1. `kong start -c config/kong_DEVELOPMENT.yml`
 
 #### Testing
 
@@ -149,7 +150,7 @@ Any test-specific Lua rocks should be specified in `.luarocks-test` file, so tha
 
 ```bash
 # First time, install dependencies.
-./bin/install-luarocks
+./bin/setup
 
 # Run specs.
  ~/.luarocks/bin/busted

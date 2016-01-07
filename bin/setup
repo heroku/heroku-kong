@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -eu
+
+# Script to setup local development environment.
+
+source .profile.local
+
+./bin/install-luarocks
+
+echo "-----> Setting up Cassandra data store"
+cqlsh --execute "CREATE KEYSPACE IF NOT EXISTS heroku_kong_dev WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};"
+kong migrations up -c config/kong_DEVELOPMENT.yml
