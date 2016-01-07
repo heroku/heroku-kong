@@ -132,6 +132,7 @@ curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'nam
 ### Local Development
 
 On Mac OS X:
+
 1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
 1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da)
 1. In the shell terminal:
