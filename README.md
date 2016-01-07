@@ -146,7 +146,7 @@ To work with Kong locally on Mac OS X.
 
 #### Testing
 
-Any test-specific Lua rocks should be specified in `.luarocks-test` file, so that they are not installed when the app is deployed.
+Any test-specific Lua rocks should be specified in `.luarocks_test` file, so that they are not installed when the app is deployed.
 
 1. Add tests in `spec/`
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
