@@ -1,0 +1,30 @@
+National Digital Forecast Database XML/SOAP API
+
+Name: NDFDgen
+Binding: ndfdXMLBinding
+Endpoint: http://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php
+SoapAction: http://graphical.weather.gov/xml/DWMLgen/wsdl/ndfdXML.wsdl#NDFDgen
+Style: rpc
+Input:
+  use: encoded
+  namespace: http://graphical.weather.gov/xml/DWMLgen/wsdl/ndfdXML.wsdl
+  encodingStyle: http://schemas.xmlsoap.org/soap/encoding/
+  message: NDFDgenRequest
+  parts:
+    latitude: xsd:decimal
+    longitude: xsd:decimal
+    product: xsd:string
+    startTime: xsd:dateTime
+    endTime: xsd:dateTime
+    Unit: xsd:string
+    weatherParameters: tns:weatherParametersType
+Output:
+  use: encoded
+  namespace: http://graphical.weather.gov/xml/DWMLgen/wsdl/ndfdXML.wsdl
+  encodingStyle: http://schemas.xmlsoap.org/soap/encoding/
+  message: NDFDgenResponse
+  parts:
+    dwmlOut: xsd:string
+Namespace: http://graphical.weather.gov/xml/DWMLgen/wsdl/ndfdXML.wsdl
+Transport: http://schemas.xmlsoap.org/soap/http
+Documentation: Returns National Weather Service digital weather forecast data. Supports latitudes and longitudes for the Continental United States, Alaska, Hawaii, Guam, and Puerto Rico only. Allowable values for the input variable "product" are "time-series" and "glance". Allowable values for the input variable "Unit" are "e" for U.S. Standare/English units and "m" for Metric units. For both products, a start and end time (Local) are required. For the time-series product, the input variable "weatherParameters" has array elements set to "true" to indicate which weather parameters are being requested. If an array element is set to "false", data for that weather parameter are not to be returned.
