@@ -22,6 +22,7 @@ plugins_available:
   - rate-limiting
   - response-ratelimiting
   - hello-world-header
+  - ndfd-xml-as-json
 
 ## The Kong working directory
 ## (Make sure you have read and write permissions)
