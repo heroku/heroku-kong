@@ -22,6 +22,7 @@ plugins_available:
   - rate-limiting
   - response-ratelimiting
   - hello-world-header
+  - ndfd-xml-as-json
 
 ## The Kong working directory
 ## (Make sure you have read and write permissions)
@@ -73,7 +74,8 @@ memory_cache_size: 128
 ## Nginx configuration
 nginx: |
   worker_processes auto;
-  error_log logs/error.log error;
+  # On Heroku, stream into logplex
+  error_log stderr info;
   daemon off;
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
   env KONG_CONF;

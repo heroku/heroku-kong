@@ -128,6 +128,42 @@ curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'nam
 curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=hello-world-header'
 ```
 
+### Demo: API translation, XML as JSON
+
+JSON/REST has taken over as the internet API lingua franca, shedding the complexity of XML/SOAP. The [National Digital Forecast Database [NDFD]](http://graphical.weather.gov/xml/) is a legacy XML/SOAP service.
+
+Here we demonstrate a custom plugin [ndfd-xml-as-json](lib/kong/plugins/ndfd-xml-as-json) to expose an JSON/REST API that fetches the maximum temperatures forecast for a location from the NDFD SOAP service. Using the single-resource concept of REST, the many variations of a SOAP interface may be broken out into elegant, individual JSON APIs.
+
+Try it in your shell terminal:
+```bash
+curl --data '{"latitude":37.733795,"longitude":-122.446747}' https://kong-proxy-public.herokuapp.com/ndfd-max-temps
+# Response contains max temperatures forecast for San Francisco, CA
+curl --data '{"latitude":27.964157,"longitude":-82.452606}' https://kong-proxy-public.herokuapp.com/ndfd-max-temps
+# Response contains max temperatures forecast for Tampa, FL
+curl --data '{"latitude":41.696629,"longitude":-71.149994}' https://kong-proxy-public.herokuapp.com/ndfd-max-temps
+# Response contains max temperatures forecast for Fall River, MA
+```
+
+Much more elegant than the legacy API. See the [sample request body](spec/data/ndfd-request.xml):
+```bash
+curl --data @spec/data/ndfd-request.xml -H 'Content-Type:text/xml' -X POST http://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php
+# Response contains wrapped XML data. Enjoy decoding that.
+```
+
+This technique may be used to create a suite of cohesive JSON APIs out of various legacy APIs.
+
+Here's the configuration for this API translator:
+
+```bash
+curl -X POST -v http://localhost:8001/apis --data 'name=ndfd-max-temps' --data 'upstream_url=http://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php' --data 'request_path=/ndfd-max-temps' --data 'strip_request_path=true'
+curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
+curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
+curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=ndfd-xml-as-json'
+```
+
+### Notes
+
+Plugins are implemented as [classic objects](https://github.com/rxi/classic).
 
 ### Local Development
 
@@ -142,6 +178,7 @@ To work with Kong locally on Mac OS X.
 #### Running
 
 * Execute `./bin/start`
+* Logs in `/usr/local/var/kong/logs/` 
 
 #### Testing
 
@@ -150,4 +187,5 @@ Any test-specific Lua rocks should be specified in `.luarocks_test` file, so tha
 1. Add tests in `spec/`
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
   * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
+1. Execute `source .profile.local`
 1. Execute `busted` to run the tests

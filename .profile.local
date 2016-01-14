@@ -1,2 +1,3 @@
-export PATH="~/.luarocks/bin:$PATH"
+export PATH="$HOME/.luarocks/bin:$PATH"
 export LUA_PATH="./lib/?.lua;./lib/?/init.lua;$LUA_PATH"
+export LUA_CPATH="./lib/?.so;$HOME/.luarocks/lib/lua/5.1/?.so;/usr/local/lib/lua/5.1/?.so;./?.so;/usr/local/lib/lua/5.1/loadall.so"
