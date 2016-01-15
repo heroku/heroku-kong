@@ -161,6 +161,18 @@ curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=
 curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=ndfd-xml-as-json'
 ```
 
+### Demo: API analytics, Librato
+
+This demo requires your own Heroku Kong instance with the Librato add-on.
+
+Here's the plugin configuration. Example based on the Bay Lights API example above:
+
+```bash
+curl -X POST -v http://localhost:8001/apis/bay-lights/plugins/ --data 'name=librato-analytics' --data "config.verify_ssl=false"
+```
+
+The `LIBRATO_*` config vars set-up by the add-on will be used for authorization, but can be overridden by explicitly setting `config.username` & `config.token` for specific instances of the Kong plugin.
+
 ### Notes
 
 Plugins are implemented as [classic objects](https://github.com/rxi/classic).
@@ -177,6 +189,9 @@ To work with Kong locally on Mac OS X.
 
 #### Running
 
+* Cassandra needs to be running
+  * start `launchctl load ~/Library/LaunchAgents/homebrew.mxcl.cassandra.plist`
+  * stop `launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.cassandra.plist`
 * Execute `./bin/start`
 * Logs in `/usr/local/var/kong/logs/` 
 
