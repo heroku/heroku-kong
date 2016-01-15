@@ -1,4 +1,4 @@
 date 2.1.2-1
 lua-cjson 2.1.0-1
 xml 1.1.3-1
-serpent
+lua-resty-http 0.06-0
