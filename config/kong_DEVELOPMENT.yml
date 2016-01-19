@@ -23,6 +23,7 @@ plugins_available:
   - response-ratelimiting
   - hello-world-header
   - ndfd-xml-as-json
+  - librato-analytics
 
 ## The Kong working directory
 ## (Make sure you have read and write permissions)
@@ -71,6 +72,8 @@ nginx: |
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
   env KONG_CONF;
   env PATH;
+  env LIBRATO_USER;
+  env LIBRATO_TOKEN;
   events {
     worker_connections {{auto_worker_connections}};
     multi_accept on;

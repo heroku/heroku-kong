@@ -1,8 +1,8 @@
+require "kong.tools.ngx_stub"
+
 local handler = require "kong.plugins.ndfd-xml-as-json.handler"
 local json = require "cjson"
 local xml = require "xml"
-
-require "kong.tools.ngx_stub"
 
 describe("kong.plugins.ndfd-xml-as-json.handler", function()
 
