@@ -3,26 +3,7 @@
 -- Adapted from Mashape's analytics plugin
 -- See: https://github.com/Mashape/kong/tree/master/kong/plugins/mashape-analytics
 --
--- This module contains a buffered array of metric objects. When the buffer is full (max number of entries
--- or max payload size accepted by the collector), it is eventually converted to a JSON payload and moved a
--- queue of payloads to be sent to the server. "Eventually", because to prevent the sending queue from growing
--- too much and crashing the Lua VM, its size is limited (in bytes). If the sending queue is currently bloated
--- and reached its size limit, then the buffer is NOT added to it, and simply discarded. Metrics will be lost.
---
--- So to resume:
---   One buffer of metrics (gets flushed once it reaches the max size)
---   One queue of pending, ready-to-be-sent batches which are JSON payloads (which also has a max size, in bytes)
---
--- 1. The sending queue keeps sending batches one by one, and if batches are acknowledged by the collector,
--- the batch is considered saved and is discarded.
--- 2. If the batch is invalid (bad metric formatting) according to the collector, it is discarded and won't be retried.
--- 3. If the connection to the collector could not be made, the batch will not be discarded so it can be retried.
--- 4. The sending queue keeps sending batches as long as it has some pending for sending. If the connection failed (3.),
--- the sending queue will use a retry policy timer which is incremented everytime the collector did not answer.
--- 5. We run a 'delayed timer' in case no call is received for a while to still flush the buffer and have 'real-time' analytics.
---
--- @see librato-analytics/serializer.lua
--- @see librato-analytics/handler.lua
+-- This module contains a buffer of metric objects. When the buffer reaches `config.batch_size` or the `config.delay` seconds, it is eventually converted to a JSON payload and moved to a queue of payloads to be sent to the server. 
 
 -- local serpent = require "serpent"
 local lub = require "lub"
@@ -48,9 +29,6 @@ local math_pow = math.pow
 local math_min = math.min
 local setmetatable = setmetatable
 
-local MB = 1024 * 1024
-local MAX_COLLECTOR_PAYLOAD_SIZE = 500 * MB
-
 -- Define an exponential retry policy for all workers.
 -- The policy will give a delay that grows everytime
 -- Galileo fails to respond. As soon as Galileo responds,
@@ -62,7 +40,6 @@ local RETRY_MAX_DELAY = 60 -- seconds
 
 local buffer_mt = {}
 buffer_mt.__index = buffer_mt
-buffer_mt.MAX_COLLECTOR_PAYLOAD_SIZE = MAX_COLLECTOR_PAYLOAD_SIZE
 
 -- A handler for delayed batch sending. When no call has been made for X seconds
 -- (X being conf.delay), we send the batch to keep analytics as close to real-time
