@@ -7,7 +7,7 @@ local utils = require "kong.tools.utils"
 local Buffer = require "kong.plugins.librato-analytics.buffer"
 
 local MB = 1024 * 1024
-local METRIC_STUB = {hello = "world"}
+local METRIC_STUB = { {hello = "world"}, {hello = "earth"}, {hello = "mars"} }
 local STUB_SIZE = string.len(json.encode(METRIC_STUB))
 local COMMA_SIZE = string.len(",")
 local JSON_ARR_SIZE = string.len("[]")
@@ -49,6 +49,21 @@ describe("Buffer", function()
       assert.equal(1, #buffer.entries)
     end)
   end)
+
+  describe(":to_json()", function()
+    it("should return a JSON array of gauges", function()
+      local buffer = Buffer.new(CONF_STUB)
+      buffer:add(METRIC_STUB)
+      buffer:add(METRIC_STUB)
+      buffer:add(METRIC_STUB)
+      local return_value = buffer:to_json()
+      local result = json.decode(return_value)
+      assert.equal("table", type(result))
+      assert.equal("table", type(result.gauges))
+      assert.equal(9, #result.gauges)
+    end)
+  end)
+
   describe(":flush()", function()
     it("should have emptied the current buffer and added a payload to be sent", function()
       local buffer = Buffer.new(CONF_STUB)
