@@ -161,9 +161,20 @@ curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=
 curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=ndfd-xml-as-json'
 ```
 
-### Demo: API analytics, Librato
+### Demo: API analytics, [Librato](https://elements.heroku.com/addons/librato)
 
-This demo requires your own Heroku Kong instance with the Librato add-on.
+Collect per-API metrics, explore, and set alerts on them with Librato. This [`librato-analytics`](lib/kong/plugins/librato-analytics) plugin demonstrates near-realtime (~1-minute delay), batch-oriented (up 300 metrics/post), asynchronous (non-blocking to proxy traffic) pushes of Kong/Nginx metrics to [Librato's Metrics API](http://dev.librato.com/v1/metrics).
+
+![Screenshot of Librato Kong metrics](http://marsikai.s3.amazonaws.com/librato-kong-bay-lights.png)
+
+The per-API metrics are sent by source, named "kong-{API-NAME}":
+  * request size (bytes)
+  * response size (bytes)
+  * kong latency (milliseconds)
+  * upstream latency (milliseconds)
+  * response latency (milliseconds)
+
+*This demo requires your own Heroku Kong instance with the Librato add-on. Kong sends custom metrics, so a paid plan of any level is required.*
 
 Here's the plugin configuration. Example based on the Bay Lights API example above:
 
