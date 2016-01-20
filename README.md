@@ -184,21 +184,45 @@ curl -X POST -v http://localhost:8001/apis/bay-lights/plugins/ --data 'name=libr
 
 The `LIBRATO_*` config vars set-up by the add-on will be used for authorization, but can be overridden by explicitly setting `config.username` & `config.token` for specific instances of the Kong plugin.
 
-### Notes
+### Dev Notes
 
-Plugins are implemented as [classic objects](https://github.com/rxi/classic).
+#### Learning the Language of Kong
 
-### Local Development
+* [Definitely an openresty guide](http://www.staticshin.com/programming/definitely-an-open-resty-guide/)
+* [An Introduction To OpenResty - Part 1](http://openmymind.net/An-Introduction-To-OpenResty-Nginx-Lua/), [2](http://openmymind.net/An-Introduction-To-OpenResty-Part-2/), & [3](http://openmymind.net/An-Introduction-To-OpenResty-Part-3/)
+* [Nginx API for Lua](https://github.com/openresty/lua-nginx-module#nginx-api-for-lua), `ngx` reference, for use in Kong plugins
+  * [Nginx variables](http://nginx.org/en/docs/http/ngx_http_upstream_module.html#var_upstream_status), accessible through `ngx.var`
+
+#### Programming with Lua
+
+* [Lua 5.1](http://www.lua.org/manual/5.1/), Note: Kong is not compatible with the newest Lua version
+* [Classic Objects](https://github.com/rxi/classic), the basis of Kong's plugins
+* [Moses](http://yonaba.github.io/Moses/doc/), functional programming
+* [Lubyk](http://doc.lubyk.org), realtime programming (performance- & game-oriented)
+* [resty-http](https://github.com/pintsized/lua-resty-http), Nginx-Lua co-routine based HTTP client
+* [Serpent](http://notebook.kulchenko.com/programming/serpent-lua-serializer-pretty-printer), inspect values
+* [Busted](http://olivinelabs.com/busted/), testing framework
+
+#### Using Environment Variables in Plugins
+
+As a [12-factor](http://12factor.net) app, Heroku Kong already uses environment variables for configuration. Here's how to use those vars within your own code.
+
+1. Whitelist the variable name for use within Nginx 
+  * In the [**kong.yml** config files](config/) `nginx:` property add `env MY_VARIABLE;`
+2. Access the variable in Lua plugins
+  * Use `os.getenv('MY_VARIABLE')` to retrieve the value
+
+#### Local Development
 
 To work with Kong locally on Mac OS X.
 
-#### Setup
+##### Setup
 
 1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
 1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da)
 1. Execute `./bin/setup`
 
-#### Running
+##### Running
 
 * Cassandra needs to be running
   * start `launchctl load ~/Library/LaunchAgents/homebrew.mxcl.cassandra.plist`
@@ -206,7 +230,7 @@ To work with Kong locally on Mac OS X.
 * Execute `./bin/start`
 * Logs in `/usr/local/var/kong/logs/` 
 
-#### Testing
+##### Testing
 
 Any test-specific Lua rocks should be specified in `.luarocks_test` file, so that they are not installed when the app is deployed.
 
