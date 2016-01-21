@@ -54,9 +54,11 @@ databases_available:
       keyspace: "<%= cassandra_keyspace %>"
       timeout: 1000
       keepalive: 60000 # in milliseconds
-      ssl: true
+      ssl: <%= cassandra_ssl %>
+<% if cassandra_ssl then -%>
       ssl_verify: true
       ssl_certificate: "/<%= cassandra_cert %>"
+<% end -%>
 
 ## Cassandra cache configuration
 database_cache_expiration: 5 # in seconds
