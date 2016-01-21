@@ -28,12 +28,22 @@ Kong is configured at runtime with the `kong-12f` command, which renders the con
 
 Revise `config/kong.yml.etlua` to suite your application. See: [Kong 0.5 Configuration Reference](https://getkong.org/docs/0.5.x/configuration/)
 
-`kong-12f` uses environment vars:
+`kong-12f` uses [config vars established by the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
 
-* `CASSANDRA_URL`
-* `CASSANDRA_TRUSTED_CERT`
-* `PORT`
-* `KONG_EXPOSE`
+### Cassandra
+
+You may connect to any Cassandra datastore accessible to your Heroku app using the `CASSANDRA_URL` config var as [documented in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
+
+For the [Instaclustr add-on](https://elements.heroku.com/addons/instaclustr), initial keyspace setup is required. To get started, use [`cqlsh`](http://docs.datastax.com/en/cql/3.1/cql/cql_reference/cqlsh.html) to run [CQL](https://cassandra.apache.org/doc/cql3/CQL-2.1.html) queries:
+
+  ```shell
+$ CQLSH_HOST={SINGLE_IC_CONTACT_POINT} cqlsh --cqlversion 3.2.1 -u {IC_USER} -p {IC_PASSWORD}
+> CREATE KEYSPACE IF NOT EXISTS kong WITH replication = {'class':'NetworkTopologyStrategy', 'US_EAST_1':3};
+> GRANT ALL ON KEYSPACE kong TO iccassandra;
+> exit
+  ```
+
+Then, [initialize DB schema](#commands).
 
 ### Kong plugins & additional Lua modules
 
