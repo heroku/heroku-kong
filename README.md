@@ -4,6 +4,8 @@ Kong Heroku app
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/heroku/heroku-kong)
 
+Requires configuring a Cassandra datastore such as [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
+
 Uses the custom [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
 Running
