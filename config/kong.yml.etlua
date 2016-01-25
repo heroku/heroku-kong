@@ -1,5 +1,8 @@
 # Kong app config template
 
+# Based on buildpack sample:
+#   https://github.com/heroku/heroku-buildpack-kong/blob/master/config/kong.yml.etlua.sample
+
 ## Available plugins on this server
 plugins_available:
   - ssl
