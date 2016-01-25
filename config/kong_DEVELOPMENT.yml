@@ -67,7 +67,7 @@ memory_cache_size: 128
 ## Nginx configuration
 nginx: |
   worker_processes auto;
-  error_log logs/error.log error;
+  error_log logs/error.log debug;
   daemon off;
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
   env KONG_CONF;
