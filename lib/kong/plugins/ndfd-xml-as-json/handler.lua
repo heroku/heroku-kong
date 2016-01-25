@@ -16,6 +16,8 @@ function XmlAsJson:access(config)
   local request_xml = json_to_xml(request_body)
 
   ngx.req.set_header("Content-Type", "text/xml")
+  ngx.req.set_header("Content-Length", #request_xml)
+  ngx.req.clear_header("Accept-Encoding")
   ngx.req.set_body_data(request_xml)
 end
 

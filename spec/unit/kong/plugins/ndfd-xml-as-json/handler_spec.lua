@@ -33,6 +33,7 @@ describe("kong.plugins.ndfd-xml-as-json.handler", function()
       ngx.req.get_body_data = function() return body_data end
       ngx.req.set_body_data = function(new_data) body_data = new_data end
       ngx.req.set_header = function(k,v) headers[k] = v end
+      ngx.req.clear_header = function(k) headers[k] = nil end
 
       local subject = handler()
       subject:access()
