@@ -76,7 +76,7 @@ nginx: |
   worker_processes auto;
   # On Heroku, stream into logplex
   error_log stderr debug;
-  daemon off;
+  daemon on;
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
   env KONG_CONF;
   env PATH;
