@@ -16,7 +16,7 @@ nginx_working_dir: /app/nginx-working
 ## Port configuration
 proxy_listen: "0.0.0.0:<%= proxy_port %>"
 proxy_listen_ssl: "0.0.0.0:<%= proxy_ssl_port %>"
-admin_api_listen: "0.0.0.0:8001"
+admin_api_listen: "127.0.0.1:8001"
 cluster_listen: "<%= cluster_listen %>"
 
 ## Specify the DAO to use
