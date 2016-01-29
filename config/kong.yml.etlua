@@ -75,7 +75,10 @@ nginx: |
   user {{user}};
   worker_processes auto;
   # On Heroku, stream into logplex
+  # https://devcenter.heroku.com/articles/process-model#output-streams-as-logs
   error_log /dev/stdout debug;
+  # On Heroku, do not daemonize
+  # https://devcenter.heroku.com/articles/runtime-principles#foreground-execution
   daemon off;
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
   env KONG_CONF;
