@@ -65,7 +65,7 @@ cassandra:
 # ssl_key_path: /path/to/certificate.key
 
 ## Sends anonymous error reports
-send_anonymous_reports: false
+send_anonymous_reports: true
 
 ## In-memory cache size (MB)
 memory_cache_size: 1024
