@@ -5,6 +5,25 @@
 
 ## Custom plugins on this server
 custom_plugins:
+  - ssl
+  - jwt
+  - acl
+  - cors
+  - oauth2
+  - tcp-log
+  - udp-log
+  - file-log
+  - http-log
+  - key-auth
+  - hmac-auth
+  - basic-auth
+  - ip-restriction
+  - mashape-analytics
+  - request-transformer
+  - response-transformer
+  - request-size-limiting
+  - rate-limiting
+  - response-ratelimiting
   - hello-world-header
   - ndfd-xml-as-json
   - librato-analytics
