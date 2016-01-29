@@ -31,16 +31,14 @@ cassandra:
   user: "<%= cassandra_user %>"
   password: "<%= cassandra_password %>"
   keyspace: "<%= cassandra_keyspace %>"
-  timeout: 1000
-  keepalive: 60000 # in milliseconds
-  ssl: <%= cassandra_ssl %>
+  replication_strategy: "NetworkTopologyStrategy" 
+  replication_factor: 3
+  ssl:
+    enabled: <%= cassandra_ssl %>
 <% if cassandra_ssl then -%>
-  ssl_verify: true
-  ssl_certificate: "/<%= cassandra_cert %>"
+    verify: true
+    certificate_authority: "/<%= cassandra_cert %>"
 <% end -%>
-
-## Cassandra cache configuration
-database_cache_expiration: 5 # in seconds
 
 ## SSL Settings
 ## (Uncomment the two properties below to set your own certificate)
@@ -51,7 +49,7 @@ database_cache_expiration: 5 # in seconds
 send_anonymous_reports: false
 
 ## In-memory cache size (MB)
-memory_cache_size: 128
+memory_cache_size: 1024
 
 ## Nginx configuration
 nginx: |

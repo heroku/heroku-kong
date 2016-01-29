@@ -8,6 +8,8 @@ Requires configuring a Cassandra datastore such as [Instaclustr](https://element
 
 Uses the custom [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
+As of [Kong version 0.6.0](http://blog.mashape.com/kong-0-6-0-released/), it can only be run within a [Heroku Private Space](https://www.heroku.com/private-spaces), because the new clustering behavior requires private dyno-to-dyno networking.
+
 Running
 -------
 

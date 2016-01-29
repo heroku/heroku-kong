@@ -24,8 +24,6 @@ cassandra:
   contact_points:
     - "127.0.0.1:9042"
   keyspace: "heroku_kong_dev"
-  timeout: 1000
-  keepalive: 60000 # in milliseconds
 
 ## Cassandra cache configuration
 database_cache_expiration: 5 # in seconds
