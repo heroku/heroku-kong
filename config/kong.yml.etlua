@@ -55,7 +55,7 @@ cassandra:
   ssl:
     enabled: <%= cassandra_ssl %>
 <% if cassandra_ssl then -%>
-    verify: true
+    verify: false
     certificate_authority: "/<%= cassandra_cert %>"
 <% end -%>
 
