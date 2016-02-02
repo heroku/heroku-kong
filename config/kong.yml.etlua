@@ -76,7 +76,7 @@ nginx: |
   worker_processes auto;
   # On Heroku, stream into logplex
   # https://devcenter.heroku.com/articles/process-model#output-streams-as-logs
-  error_log /dev/stderr debug;
+  error_log stderr debug;
   # On Heroku, do not daemonize
   # https://devcenter.heroku.com/articles/runtime-principles#foreground-execution
   daemon off;
