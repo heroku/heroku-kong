@@ -38,6 +38,9 @@ proxy_listen_ssl: "0.0.0.0:<%= proxy_ssl_port %>"
 admin_api_listen: "127.0.0.1:8001"
 cluster_listen: "<%= cluster_listen %>"
 
+cluster:
+  encrypt: YvhV3cGr5fLMix7zRe2DAQ==
+
 ## Specify the DAO to use
 database: cassandra
 
