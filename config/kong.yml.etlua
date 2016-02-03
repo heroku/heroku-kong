@@ -132,7 +132,7 @@ nginx: |
     lua_shared_dict cassandra 1m;
     lua_shared_dict cassandra_prepared 5m;
     lua_socket_log_errors off;
-    lua_ssl_trusted_certificate '<%= cassandra_cert %>';
+    {{lua_ssl_trusted_certificate}}
     init_by_lua '
       kong = require "kong"
       kong.init()
