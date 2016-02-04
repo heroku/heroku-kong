@@ -6,9 +6,18 @@ Kong Heroku app
 
 Requires configuring a Cassandra datastore such as [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
 
-Uses the custom [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
+Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong) via [multi buildpack](https://github.com/heroku/heroku-buildpack-multi).
 
-As of [Kong version 0.6.0](http://blog.mashape.com/kong-0-6-0-released/), it can only be run within a [Heroku Private Space](https://www.heroku.com/private-spaces), because the new clustering behavior requires private dyno-to-dyno networking.
+Deploying
+---------
+Requires a [Heroku Private Space](https://www.heroku.com/private-spaces) to scale beyond a signle Kong dyno. (The new clustering behavior requires private dyno-to-dyno networking.)
+
+```bash
+heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git --space my-private-space
+git clone https://github.com/heroku/heroku-kong.git
+cd heroku-kong
+git push heroku master
+```
 
 Running
 -------
@@ -253,3 +262,4 @@ Any test-specific Lua rocks should be specified in `.luarocks_test` file, so tha
   * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
 1. Execute `source .profile.local`
 1. Execute `busted` to run the tests
+

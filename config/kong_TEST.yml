@@ -25,9 +25,6 @@ cassandra:
     - "127.0.0.1:9042"
   keyspace: kong_tests
 
-## Cassandra cache configuration
-database_cache_expiration: 5 # in seconds
-
 ## SSL Settings
 ## (Uncomment the two properties below to set your own certificate)
 # ssl_cert_path: /path/to/certificate.pem
