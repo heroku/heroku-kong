@@ -85,6 +85,7 @@ nginx: |
   daemon off;
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
   env KONG_CONF;
+  env KONG_EXTERNAL_SUPERVISE;
   env PATH;
   env LIBRATO_USER;
   env LIBRATO_TOKEN;
