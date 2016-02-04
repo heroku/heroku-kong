@@ -31,9 +31,17 @@ kong-12f && kong start -c config/kong.yml
 
 ### Commands
 
-* web (start Kong): `heroku run "kong-12f && kong start -c config/kong.yml"`
-* shell (interactive CLI): `heroku run "kong-12f && bash"`
-* initialize DB schema (interactive CLI): `heroku run "kong-12f && kong migrations reset -c config/kong.yml"`
+* shell (interactive CLI):
+
+  ```bash
+  heroku run bash
+  kong-12f && source .profile.d/kong-env.sh
+  ```
+* initialize DB schema (interactive CLI):
+  
+  ```bash
+  heroku run "kong-12f && kong migrations reset -c config/kong.yml"
+  ```
 
 ### Configuration
 
@@ -88,7 +96,8 @@ In a one-off dyno console, start Kong, and make requests to the Admin API:
 
 ```bash
 $ heroku run bash
-> kong-12f && kong start -c config/kong.yml &
+> kong-12f && source .profile.d/kong-env.sh
+> kong start -c config/kong.yml &
 # …Kong will start in the background, still writing to the console.
 > curl localhost:8001
 ```
