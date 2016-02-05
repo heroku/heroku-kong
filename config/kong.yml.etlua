@@ -82,7 +82,8 @@ nginx: |
   error_log stderr info;
   # On Heroku, do not daemonize
   # https://devcenter.heroku.com/articles/runtime-principles#foreground-execution
-  daemon off;
+  # Do NOT set `daemon` here, so it can be overridden at runtime in `Procfile.web`
+  #daemon off; ## "on" is the default
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
   env KONG_CONF;
   env KONG_EXTERNAL_SUPERVISE;
