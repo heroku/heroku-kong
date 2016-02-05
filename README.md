@@ -21,35 +21,35 @@ git push heroku master
 
 Running
 -------
-
-Execute `kong-12f` before every run, to configure using environment variables.
-
-For example, the [Kong buildpack release](https://github.com/heroku/heroku-buildpack-kong/bin/release) runs:
-```
-kong-12f && kong start -c config/kong.yml
-```
+The [Procfile](Procfile) & [Procfile.web](Procfile.web) will start & supervise all of Kong's process.
 
 ### Commands
 
-* shell (interactive CLI):
+To use Kong CLI in a console:
+```
+$ heroku run bash
 
-  ```bash
-  heroku run bash
-  kong-12f && source .profile.d/kong-env.sh
-  ```
-* initialize DB schema (interactive CLI):
-  
-  ```bash
-  heroku run "kong-12f && kong migrations reset -c config/kong.yml"
-  ```
+# Run Kong in the background, so you can issue commands:
+~ $ kong start -c $KONG_CONF &
+# …Kong will start in the background, still writing to the console.
+
+# Example commands:
+~ $ kong --help
+~ $ kong migrations list -c $KONG_CONF
+```
 
 ### Configuration
 
-Kong is configured at runtime with the `kong-12f` command, which renders the config file [`config/kong.yml.etlua`](config/kong.yml.etlua) each time.
+First, [config vars are setup in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
 
-Revise `config/kong.yml.etlua` to suite your application. See: [Kong 0.5 Configuration Reference](https://getkong.org/docs/0.5.x/configuration/)
+Kong is automatically configured at runtime with the `.profile.d/kong-12f.sh` script, which:
 
-`kong-12f` uses [config vars established by the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
+  * renders the `kong.yml` config file
+  * exports environment variables (see: `.profile.d/kong-env` in a running dyno)
+
+Revise [`config/kong.yml.etlua`](config/kong.yml.etlua) to suite your application.
+
+See: [Kong 0.6 Configuration Reference](https://getkong.org/docs/0.6.x/configuration/)
 
 ### Cassandra
 
@@ -64,7 +64,10 @@ $ CQLSH_HOST={SINGLE_IC_CONTACT_POINT} cqlsh --cqlversion 3.2.1 -u {IC_USER} -p 
 > exit
   ```
 
-Then, [initialize DB schema](#commands).
+Then, initialize DB schema [using a console](#commands):
+```bash
+~ $ kong migrations reset -c $KONG_CONF
+```
 
 ### Kong plugins & additional Lua modules
 
