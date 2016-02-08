@@ -54,7 +54,7 @@ cassandra:
   password: "<%= cassandra_password %>"
   keyspace: "<%= cassandra_keyspace %>"
   replication_strategy: "SimpleStrategy" 
-  replication_factor: 3
+  replication_factor: <%= cassandra_replication_factor %>
   ssl:
     enabled: <%= cassandra_ssl %>
 <% if cassandra_ssl then -%>
