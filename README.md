@@ -38,7 +38,8 @@ The [Procfile](Procfile) & [Procfile.web](Procfile.web) will start & supervise a
 ### Commands
 
 To use Kong CLI in a console:
-```
+
+```bash
 $ heroku run bash
 
 # Run Kong in the background, so you can issue commands:
