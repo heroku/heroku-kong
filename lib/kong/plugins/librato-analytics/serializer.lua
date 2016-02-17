@@ -6,8 +6,8 @@ function _M.serialize(ngx)
   local source = "kong-"..ngx.ctx.api.name
   local measure_time = math.floor(ngx.req.start_time())
 
-  local total_latency = ngx.var.request_time * 1000
-  local upstream_latency = ngx.var.upstream_response_time * 1000
+  local total_latency = (ngx.var.request_time or 0) * 1000
+  local upstream_latency = (ngx.var.upstream_response_time or 0) * 1000
   local kong_latency = (ngx.ctx.kong_processing_access or 0) +
     (ngx.ctx.kong_processing_header_filter or 0) +
     (ngx.ctx.kong_processing_body_filter or 0)
