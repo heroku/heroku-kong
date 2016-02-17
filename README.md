@@ -26,14 +26,26 @@ Requirements
 
 Usage
 -----
+Get started by cloning heroku-kong and deploying it to a new Heroku app.
+
+The `serf` command must be installed locally to generate the cluster's shared secret. [Download Serf](https://www.serfdom.io/downloads.html)
+
 ```bash
-heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git --space my-private-space
 git clone https://github.com/heroku/heroku-kong.git
 cd heroku-kong
+
+# Create app in Common Runtime:
+heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git
+# …or in a Private Space:
+heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git --space my-private-space
+
+heroku config:set KONG_CLUSTER_SECRET=`serf keygen`
+
 git push heroku master
+# …the first build will take approximately ten minutes; subsequent builds approx two-minutes.
 ```
 
-The [Procfile](Procfile) & [Procfile.web](Procfile.web) will start & supervise all of Kong's process.
+The [Procfile](Procfile) uses [runit](http://smarden.org/runit/) to supervise all of Kong's processes defined in [Procfile.web](Procfile.web).
 
 ### Commands
 
