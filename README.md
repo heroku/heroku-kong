@@ -97,21 +97,7 @@ Then, initialize DB schema [using a console](#commands):
 
 ### Kong plugins & additional Lua modules
 
-  * Lua source
-    * [Kong plugins](https://getkong.org/docs/0.5.x/plugin-development/):
-      * `lib/kong/plugins/{NAME}`
-      * See: [Plugin File Structure](https://getkong.org/docs/0.5.x/plugin-development/file-structure/)
-    * Other Lua modules:
-      * `lib/{NAME}.lua` or
-      * `lib/{NAME}/init.lua`
-  * Lua rocks: specify in the app's `.luarocks` file.
-
-    Each line is passed as args to `luarocks install`. Example:
-
-    ```
-date 2.1.2-1
-    ```
-  * Add each Kong plugin name to the `plugins_available` list in `config/kong.yml.etlua` 
+See [buildpack usage](https://github.com/heroku/heroku-buildpack-kong#usage)
 
 ### Protecting the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
