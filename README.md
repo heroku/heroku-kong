@@ -42,21 +42,22 @@ To use Kong CLI in a console:
 $ heroku run bash
 
 # Run Kong in the background, so you can issue commands:
-~ $ kong start -c $KONG_CONF &
-# …Kong will start in the background, still writing to the console.
+~ $ kong start -c $KONG_CONF
+# …Kong will start & continue running in the background of this interactive console.
 
 # Example commands:
 ~ $ kong --help
 ~ $ kong migrations list -c $KONG_CONF
+~ $ curl http://localhost:8001/status
 ```
 
 ### Configuration
 
-First, [config vars are setup in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
+The Heroku app must have several [config vars, as defined in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
 
 Kong is automatically configured at runtime with the `.profile.d/kong-12f.sh` script, which:
 
-  * renders the `kong.yml` config file
+  * renders the `config/kong.yml` file
   * exports environment variables (see: `.profile.d/kong-env` in a running dyno)
 
 Revise [`config/kong.yml.etlua`](config/kong.yml.etlua) to suite your application.
