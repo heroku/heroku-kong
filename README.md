@@ -4,13 +4,24 @@ Kong Heroku app
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/heroku/heroku-kong)
 
-Requires configuring a Cassandra datastore such as [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
-
 Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong) via [multi buildpack](https://github.com/heroku/heroku-buildpack-multi).
 
-Deploying
----------
-Requires a [Heroku Private Space](https://www.heroku.com/private-spaces) to scale beyond a signle Kong dyno. (The new clustering behavior requires private dyno-to-dyno networking.)
+This is pre-release software
+----------------------------
+Both Kong itself and this app are actively in development. [MIT license](LICENSE) is in effect.
+
+Requirements
+------------
+* Cassandra datastore
+  * [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
+* [Clustering](https://getkong.org/docs/0.6.x/clustering/) support
+  * [Heroku Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime)
+    * Only a single-dyno is fully supported, `heroku ps:scale web=1`
+    * Kong's cluster will be bound to localhost, `127.0.0.1:7946`.
+    * Multiple dynos will not be recognized in the cluster.
+  * [Heroku Private Space](https://www.heroku.com/private-spaces)
+    * Scale horizontally from one to hundreds of dynos, `heroku ps:scale web=10`
+    * Kong's cluster connects via private subnet in the Space.
 
 ```bash
 heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git --space my-private-space
