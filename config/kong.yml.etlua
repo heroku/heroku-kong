@@ -3,8 +3,8 @@
 # Based on buildpack sample:
 #   https://github.com/heroku/heroku-buildpack-kong/blob/master/config/kong.yml.etlua.sample
 
-## Available plugins on this server
-plugins_available:
+## Custom plugins on this server
+custom_plugins:
   - ssl
   - jwt
   - acl
@@ -33,38 +33,34 @@ plugins_available:
 nginx_working_dir: /app/nginx-working
 
 ## Port configuration
-proxy_port: <%= proxy_port %>
-proxy_ssl_port: <%= proxy_ssl_port %>
-#admin_api_port: <%= admin_api_port %>
-admin_api_port: 8001
+proxy_listen: "0.0.0.0:<%= proxy_port %>"
+proxy_listen_ssl: "0.0.0.0:<%= proxy_ssl_port %>"
+admin_api_listen: "127.0.0.1:8001"
+cluster_listen: "<%= cluster_listen %>"
 
-## Secondary port configuration
-dnsmasq_port: <%= dnsmasq_port %>
+cluster:
+  encrypt: "<%= cluster_secret %>"
 
 ## Specify the DAO to use
 database: cassandra
 
 ## Databases configuration
-databases_available:
-  cassandra:
-    properties:
-      contact_points:
+cassandra:
+  contact_points:
 <% for i, host in pairs(cassandra_hosts) do -%>
-        - "<%= host %>"
+    - "<%= host %>"
 <% end -%>
-      user: "<%= cassandra_user %>"
-      password: "<%= cassandra_password %>"
-      keyspace: "<%= cassandra_keyspace %>"
-      timeout: 1000
-      keepalive: 60000 # in milliseconds
-      ssl: <%= cassandra_ssl %>
+  username: "<%= cassandra_user %>"
+  password: "<%= cassandra_password %>"
+  keyspace: "<%= cassandra_keyspace %>"
+  replication_strategy: "SimpleStrategy" 
+  replication_factor: <%= cassandra_replication_factor %>
+  ssl:
+    enabled: <%= cassandra_ssl %>
 <% if cassandra_ssl then -%>
-      ssl_verify: true
-      ssl_certificate: "/<%= cassandra_cert %>"
+    verify: true
+    certificate_authority: "<%= cassandra_cert %>"
 <% end -%>
-
-## Cassandra cache configuration
-database_cache_expiration: 5 # in seconds
 
 ## SSL Settings
 ## (Uncomment the two properties below to set your own certificate)
@@ -75,16 +71,22 @@ database_cache_expiration: 5 # in seconds
 send_anonymous_reports: true
 
 ## In-memory cache size (MB)
-memory_cache_size: 128
+memory_cache_size: 1024
 
 ## Nginx configuration
 nginx: |
+  user {{user}};
   worker_processes auto;
   # On Heroku, stream into logplex
+  # https://devcenter.heroku.com/articles/process-model#output-streams-as-logs
   error_log stderr info;
-  daemon off;
+  # On Heroku, do not daemonize
+  # https://devcenter.heroku.com/articles/runtime-principles#foreground-execution
+  # Do NOT set `daemon` here, so it can be overridden at runtime in `Procfile.web`
+  #daemon off; ## "on" is the default
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
   env KONG_CONF;
+  env KONG_EXTERNAL_SUPERVISE;
   env PATH;
   env LIBRATO_USER;
   env LIBRATO_TOKEN;
@@ -125,47 +127,48 @@ nginx: |
     lua_code_cache on;
     lua_max_running_timers 4096;
     lua_max_pending_timers 16384;
-    lua_shared_dict locks 100k;
+    lua_shared_dict reports_locks 100k;
+    lua_shared_dict cluster_locks 100k;
+    lua_shared_dict cluster_autojoin_locks 100k;
     lua_shared_dict cache {{memory_cache_size}}m;
+    lua_shared_dict cassandra 1m;
+    lua_shared_dict cassandra_prepared 5m;
     lua_socket_log_errors off;
     {{lua_ssl_trusted_certificate}}
     init_by_lua '
       kong = require "kong"
-      local status, err = pcall(kong.init)
-      if not status then
-        ngx.log(ngx.ERR, "Startup error: "..err)
-        os.exit(1)
-      end
+      kong.init()
     ';
-    init_worker_by_lua 'kong.exec_plugins_init_worker()';
+    init_worker_by_lua 'kong.init_worker()';
     server {
       server_name _;
-      listen {{proxy_port}};
-      listen {{proxy_ssl_port}} ssl;
-      ssl_certificate_by_lua 'kong.exec_plugins_certificate()';
+      listen {{proxy_listen}};
+      listen {{proxy_listen_ssl}} ssl;
+      ssl_certificate_by_lua 'kong.ssl_certificate()';
       ssl_certificate {{ssl_cert}};
       ssl_certificate_key {{ssl_key}};
       ssl_protocols TLSv1 TLSv1.1 TLSv1.2;# omit SSLv3 because of POODLE (CVE-2014-3566)
       location / {
         default_type 'text/plain';
         # These properties will be used later by proxy_pass
-        set $backend_host nil;
-        set $backend_url nil;
+        set $upstream_host nil;
+        set $upstream_url nil;
         # Authenticate the user and load the API info
-        access_by_lua 'kong.exec_plugins_access()';
+        access_by_lua 'kong.access()';
+        # Proxy the request
         # Proxy the request
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header Host $backend_host;
-        proxy_pass $backend_url;
+        proxy_set_header Host $upstream_host;
+        proxy_pass $upstream_url;
         proxy_pass_header Server;
         # Add additional response headers
-        header_filter_by_lua 'kong.exec_plugins_header_filter()';
+        header_filter_by_lua 'kong.header_filter()';
         # Change the response body
-        body_filter_by_lua 'kong.exec_plugins_body_filter()';
+        body_filter_by_lua 'kong.body_filter()';
         # Log the request
-        log_by_lua 'kong.exec_plugins_log()';
+        log_by_lua 'kong.log()';
       }
       location /robots.txt {
         return 200 'User-agent: *\nDisallow: /';
@@ -180,7 +183,9 @@ nginx: |
       }
     }
     server {
-      listen {{admin_api_port}};
+      listen {{admin_api_listen}};
+      client_max_body_size 10m;
+      client_body_buffer_size 10m;
       location / {
         default_type application/json;
         content_by_lua '
@@ -196,12 +201,11 @@ nginx: |
       }
       location /nginx_status {
         internal;
+        access_log off;
         stub_status;
       }
       location /robots.txt {
         return 200 'User-agent: *\nDisallow: /';
       }
-      # Do not remove, additional configuration placeholder for some plugins
-      # {{additional_configuration}}
     }
   }

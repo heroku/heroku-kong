@@ -4,33 +4,65 @@ Kong Heroku app
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/heroku/heroku-kong)
 
-Requires configuring a Cassandra datastore such as [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
+Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong) via [multi buildpack](https://github.com/heroku/heroku-buildpack-multi).
 
-Uses the custom [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
+This is pre-release software
+----------------------------
+Both Kong itself and this app are actively in development. [MIT license](LICENSE) is in effect.
 
-Running
--------
+Requirements
+------------
+* [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command)
+* Cassandra datastore
+  * [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
+* Private network for [clustering](https://getkong.org/docs/0.6.x/clustering/)
+  * [Heroku Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime)
+    * Only a single-dyno is fully supported, `heroku ps:scale web=1`
+    * Kong's cluster will be bound to localhost, `127.0.0.1:7946`.
+    * Multiple dynos will not be recognized in the cluster.
+  * [Heroku Private Space](https://www.heroku.com/private-spaces)
+    * Scale horizontally from one to hundreds of dynos, `heroku ps:scale web=10`
+    * Kong's cluster connects via private subnet in the Space.
 
-Execute `kong-12f` before every run, to configure using environment variables.
-
-For example, the [Kong buildpack release](https://github.com/heroku/heroku-buildpack-kong/bin/release) runs:
+Usage
+-----
+```bash
+heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git --space my-private-space
+git clone https://github.com/heroku/heroku-kong.git
+cd heroku-kong
+git push heroku master
 ```
-kong-12f && kong start -c config/kong.yml
-```
+
+The [Procfile](Procfile) & [Procfile.web](Procfile.web) will start & supervise all of Kong's process.
 
 ### Commands
 
-* web (start Kong): `heroku run "kong-12f && kong start -c config/kong.yml"`
-* shell (interactive CLI): `heroku run "kong-12f && bash"`
-* initialize DB schema (interactive CLI): `heroku run "kong-12f && kong migrations reset -c config/kong.yml"`
+To use Kong CLI in a console:
+```
+$ heroku run bash
+
+# Run Kong in the background, so you can issue commands:
+~ $ kong start -c $KONG_CONF
+# …Kong will start & continue running in the background of this interactive console.
+
+# Example commands:
+~ $ kong --help
+~ $ kong migrations list -c $KONG_CONF
+~ $ curl http://localhost:8001/status
+```
 
 ### Configuration
 
-Kong is configured at runtime with the `kong-12f` command, which renders the config file [`config/kong.yml.etlua`](config/kong.yml.etlua) each time.
+The Heroku app must have several [config vars, as defined in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
 
-Revise `config/kong.yml.etlua` to suite your application. See: [Kong 0.5 Configuration Reference](https://getkong.org/docs/0.5.x/configuration/)
+Kong is automatically configured at runtime with the `.profile.d/kong-12f.sh` script, which:
 
-`kong-12f` uses [config vars established by the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
+  * renders the `config/kong.yml` file
+  * exports environment variables (see: `.profile.d/kong-env` in a running dyno)
+
+Revise [`config/kong.yml.etlua`](config/kong.yml.etlua) to suite your application.
+
+See: [Kong 0.6 Configuration Reference](https://getkong.org/docs/0.6.x/configuration/)
 
 ### Cassandra
 
@@ -45,7 +77,10 @@ $ CQLSH_HOST={SINGLE_IC_CONTACT_POINT} cqlsh --cqlversion 3.2.1 -u {IC_USER} -p 
 > exit
   ```
 
-Then, [initialize DB schema](#commands).
+Then, initialize DB schema [using a console](#commands):
+```bash
+~ $ kong migrations reset -c $KONG_CONF
+```
 
 ### Kong plugins & additional Lua modules
 
@@ -77,7 +112,8 @@ In a one-off dyno console, start Kong, and make requests to the Admin API:
 
 ```bash
 $ heroku run bash
-> kong-12f && kong start -c config/kong.yml &
+> kong-12f && source .profile.d/kong-env.sh
+> kong start -c config/kong.yml &
 # …Kong will start in the background, still writing to the console.
 > curl localhost:8001
 ```
@@ -251,3 +287,4 @@ Any test-specific Lua rocks should be specified in `.luarocks_test` file, so tha
   * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
 1. Execute `source .profile.local`
 1. Execute `busted` to run the tests
+

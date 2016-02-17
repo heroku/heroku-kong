@@ -4,6 +4,8 @@ local json = require "cjson"
 local xml = require "xml"
 local lub = require "lub"
 
+-- local S = require "serpent"
+
 function XmlAsJson:new()
   XmlAsJson.super.new(self, "ndfd-xml-as-json")
 end
@@ -18,6 +20,7 @@ function XmlAsJson:access(config)
   ngx.req.set_header("Content-Type", "text/xml")
   ngx.req.set_header("Content-Length", #request_xml)
   ngx.req.clear_header("Accept-Encoding")
+  -- ngx.log(ngx.DEBUG, S.block(ngx.req.get_headers()))
   ngx.req.set_body_data(request_xml)
 end
 
@@ -48,6 +51,7 @@ end
 
 
 function xml_to_json(v)
+  -- ngx.log(ngx.DEBUG, S.block(v))
   local wrapped_response_xml = xml.load(v)
   -- Unwrap the embedded response data (Double SOAPed!)
   local response_xml = xml.load(unescape(
@@ -87,6 +91,7 @@ end
 
 
 function json_to_xml(v)
+  -- ngx.log(ngx.DEBUG, S.block(v))
   local request_json = json.decode(v)
   local request_xml = xml.dump(
     {xml='SOAP-ENV:Envelope',

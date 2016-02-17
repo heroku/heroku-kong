@@ -1,0 +1,3 @@
+dnsmasq: dnsmasq -p $DNSMASQ_PORT -N -o --listen-address=127.0.0.1 --keep-in-foreground
+nginx: nginx -p $NGINX_WORKING_DIR -c $NGINX_CONFIG -g "daemon off;"
+serf: serf agent -bind $SERF_CLUSTER_LISTEN -rpc-addr $SERF_CLUSTER_LISTEN_RPC -encrypt $SERF_ENCRYPT -log-level err -profile lan -node $SERF_NODE_NAME -event-handler $SERF_EVENT_HANDLER

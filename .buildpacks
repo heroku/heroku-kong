@@ -1,2 +1,3 @@
 https://github.com/timshadel/heroku-buildpack-github-netrc
-https://github.com/heroku/heroku-buildpack-kong#v1.0.0
+https://github.com/heroku/heroku-buildpack-kong#kong-0.6.0
+https://github.com/codeship/heroku-buildpack-runit.git
