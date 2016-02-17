@@ -33,7 +33,7 @@ local setmetatable = setmetatable
 -- The policy will give a delay that grows everytime
 -- Galileo fails to respond. As soon as Galileo responds,
 -- the delay is reset to its base.
-local dict = ngx.shared.locks
+local dict = ngx.shared.cache
 local RETRY_INDEX_KEY = "librato_analytics_retry_index"
 local RETRY_BASE_DELAY = 1 -- seconds
 local RETRY_MAX_DELAY = 60 -- seconds
