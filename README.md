@@ -107,21 +107,19 @@ For Kong on Heroku, the Admin API listens on the dyno's localhost port 8001.
 
 That's the `admin_api_port` set in [`config/kong.yml.etlua`](config/kong.yml.etlua).
 
-#### Access via Heroku console
-In a one-off dyno console, start Kong, and make requests to the Admin API:
+#### Access via [console](#commands)
+Make API requests to localhost with curl.
 
 ```bash
 $ heroku run bash
-> kong-12f && source .profile.d/kong-env.sh
-> kong start -c config/kong.yml &
-# …Kong will start in the background, still writing to the console.
-> curl localhost:8001
+> kong start -c $KONG_CONFIG
+> curl http://localhost:8001
 ```
 
 #### Authenticated Admin API
 Using Kong itself, you may expose the Admin API with authentication & rate limiting.
 
-From the Heroku console:
+From the console:
 ```bash
 # Create the authenticated `/kong-admin` API, targeting the localhost port:
 curl -i -X POST --url http://localhost:8001/apis/ --data 'name=kong-admin' --data 'upstream_url=http://localhost:8001/' --data 'request_path=/kong-admin' --data 'strip_request_path=true'
