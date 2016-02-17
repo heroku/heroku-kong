@@ -12,9 +12,10 @@ Both Kong itself and this app are actively in development. [MIT license](LICENSE
 
 Requirements
 ------------
+* [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command)
 * Cassandra datastore
   * [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
-* [Clustering](https://getkong.org/docs/0.6.x/clustering/) support
+* Private network for [clustering](https://getkong.org/docs/0.6.x/clustering/)
   * [Heroku Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime)
     * Only a single-dyno is fully supported, `heroku ps:scale web=1`
     * Kong's cluster will be bound to localhost, `127.0.0.1:7946`.
@@ -23,6 +24,8 @@ Requirements
     * Scale horizontally from one to hundreds of dynos, `heroku ps:scale web=10`
     * Kong's cluster connects via private subnet in the Space.
 
+Usage
+-----
 ```bash
 heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git --space my-private-space
 git clone https://github.com/heroku/heroku-kong.git
@@ -30,8 +33,6 @@ cd heroku-kong
 git push heroku master
 ```
 
-Running
--------
 The [Procfile](Procfile) & [Procfile.web](Procfile.web) will start & supervise all of Kong's process.
 
 ### Commands
