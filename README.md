@@ -15,7 +15,7 @@ Requirements
 * [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command)
 * Cassandra datastore
   * [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
-* Private network for [clustering](https://getkong.org/docs/0.6.x/clustering/)
+* Private network for [clustering](https://getkong.org/docs/0.7.x/clustering/)
   * [Heroku Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime)
     * Only a single-dyno is fully supported, `heroku ps:scale web=1`
     * Kong's cluster will be bound to localhost, `127.0.0.1:7946`.
@@ -78,7 +78,7 @@ Kong is automatically configured at runtime with the `.profile.d/kong-12f.sh` sc
 
 Revise [`config/kong.yml.etlua`](config/kong.yml.etlua) to suite your application.
 
-See: [Kong 0.6 Configuration Reference](https://getkong.org/docs/0.6.x/configuration/)
+See: [Kong 0.7 Configuration Reference](https://getkong.org/docs/0.7.x/configuration/)
 
 ### Cassandra
 
