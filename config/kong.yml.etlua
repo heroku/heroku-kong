@@ -79,7 +79,7 @@ nginx: |
   worker_processes auto;
   # On Heroku, stream into logplex
   # https://devcenter.heroku.com/articles/process-model#output-streams-as-logs
-  error_log stderr info;
+  error_log stderr warn;
   # On Heroku, do not daemonize
   # https://devcenter.heroku.com/articles/runtime-principles#foreground-execution
   # Do NOT set `daemon` here, so it can be overridden at runtime in `Procfile.web`
