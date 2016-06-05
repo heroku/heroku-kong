@@ -116,7 +116,7 @@ Make API requests to localhost with curl.
 
 ```bash
 $ heroku run bash
-> kong start -c $KONG_CONFIG
+> kong start -c $KONG_CONF
 > curl http://localhost:8001
 ```
 
