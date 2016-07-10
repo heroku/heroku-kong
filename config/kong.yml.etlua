@@ -40,11 +40,13 @@ cluster_listen: "<%= cluster_listen %>"
 
 cluster:
   encrypt: "<%= cluster_secret %>"
+  ttl_on_failure: 3600
 
 ## Specify the DAO to use
-database: cassandra
+database: "<%= database %>"
 
-## Databases configuration
+## Cassandra
+<% if database == "cassandra" %>
 cassandra:
   contact_points:
 <% for i, host in pairs(cassandra_hosts) do -%>
@@ -66,6 +68,15 @@ cassandra:
 ## (Uncomment the two properties below to set your own certificate)
 # ssl_cert_path: /path/to/certificate.pem
 # ssl_key_path: /path/to/certificate.key
+<% elseif database == "postgres" %>
+postgres:
+  host: "<%= postgres_host %>"
+  port: <%= postgres_port %>
+  user: "<%= postgres_user %>"
+  password: "<%= postgres_password %>"
+  database: "<%= postgres_database %>"
+  ssl: true
+<% end %>
 
 ## Sends anonymous error reports
 send_anonymous_reports: true
@@ -79,7 +90,7 @@ nginx: |
   worker_processes auto;
   # On Heroku, stream into logplex
   # https://devcenter.heroku.com/articles/process-model#output-streams-as-logs
-  error_log stderr warn;
+  error_log stderr <%= kong_log_level %>;
   # On Heroku, do not daemonize
   # https://devcenter.heroku.com/articles/runtime-principles#foreground-execution
   # Do NOT set `daemon` here, so it can be overridden at runtime in `Procfile.web`

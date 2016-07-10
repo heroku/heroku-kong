@@ -1,6 +1,6 @@
 Kong Heroku app
 ===============
-[Kong 0.7.0](http://blog.mashape.com/kong-0-7-0-released/) as a [12-factor](http://12factor.net) app.
+[Kong 0.8.3](http://blog.mashape.com/kong-0-8-3-released/) as a [12-factor](http://12factor.net) app.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/heroku/heroku-kong)
 
@@ -13,9 +13,10 @@ Both Kong itself and this app are actively in development. [MIT license](LICENSE
 Requirements
 ------------
 * [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command)
-* Cassandra datastore
+* Cassandra or Postgres datastore
   * [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
-* Private network for [clustering](https://getkong.org/docs/0.7.x/clustering/)
+  * [Heroku Postgres](https://elements.heroku.com/addons/heroku-postgresql). See: [Postgres notes](#postgres)
+* Private network for [clustering](https://getkong.org/docs/0.8.x/clustering/)
   * [Heroku Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime)
     * Only a single-dyno is fully supported, `heroku ps:scale web=1`
     * Kong's cluster will be bound to localhost, `127.0.0.1:7946`.
@@ -78,7 +79,7 @@ Kong is automatically configured at runtime with the `.profile.d/kong-12f.sh` sc
 
 Revise [`config/kong.yml.etlua`](config/kong.yml.etlua) to suite your application.
 
-See: [Kong 0.7 Configuration Reference](https://getkong.org/docs/0.7.x/configuration/)
+See: [Kong 0.8 Configuration Reference](https://getkong.org/docs/0.8.x/configuration/)
 
 ### Cassandra
 
@@ -99,6 +100,12 @@ Then, initialize DB schema [using a console](#commands):
 ```bash
 ~ $ kong migrations reset -c $KONG_CONF
 ```
+
+### Postgres
+
+You may connect to any Postgres datastore accessible to your Heroku app using the `DATABASE_URL` config var as [documented in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
+
+Once Postgres is attached to the app, Kong will automatically create the keyspace and run migrations.
 
 ### Kong plugins & additional Lua modules
 
@@ -269,12 +276,12 @@ To work with Kong locally on Mac OS X.
 ##### Setup
 
 1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
-1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da)
+1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da) or Install Postgres
 1. Execute `./bin/setup`
 
 ##### Running
 
-* Cassandra needs to be running
+* Cassandra or Postgres needs to be running; for Cassandra:
   * start `launchctl load ~/Library/LaunchAgents/homebrew.mxcl.cassandra.plist`
   * stop `launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.cassandra.plist`
 * Execute `./bin/start`
