@@ -42,7 +42,7 @@ heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpac
 heroku config:set KONG_CLUSTER_SECRET=`serf keygen`
 
 # If you want to try Instaclustr Cassandra, a paid add-on
-heroku addons:create instaclustr:production-light
+heroku addons:create instaclustr:starter
 
 git push heroku master
 # …the first build will take approximately ten minutes; subsequent builds approx two-minutes.
