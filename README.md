@@ -2,7 +2,7 @@ Kong Heroku app
 ===============
 [Kong 0.7.0](http://blog.mashape.com/kong-0-7-0-released/) as a [12-factor](http://12factor.net) app.
 
-[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/heroku/heroku-kong)
+🚨 **This Heroku app is no longer in development. It uses an outdated version of Kong.** It remains here on Github only to support existing deployments.
 
 Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
