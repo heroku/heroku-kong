@@ -6,10 +6,6 @@ Kong Heroku app
 
 Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
-This is pre-release software
-----------------------------
-Both Kong itself and this app are actively in development. [MIT license](LICENSE) is in effect.
-
 Requirements
 ------------
 * [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command)
