@@ -1,20 +1,17 @@
 Kong Heroku app
 ===============
-[Kong 0.7.0](http://blog.mashape.com/kong-0-7-0-released/) as a [12-factor](http://12factor.net) app.
-
-🚨 **This Heroku app is no longer in development. It uses an outdated version of Kong.** It remains here on Github only to support existing deployments.
+[Kong CE 0.11.0](http://blog.mashape.com/kong-ce-0-11-0-released/) as a [12-factor](http://12factor.net) app.
 
 Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
 Requirements
 ------------
 * [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command)
-* Cassandra datastore
-  * [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
-* Private network for [clustering](https://getkong.org/docs/0.7.x/clustering/)
+* [Heroku Postgres](https://elements.heroku.com/addons/heroku-postgresql)
+* Private network for [clustering](https://getkong.org/docs/0.11.x/clustering/)
   * [Heroku Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime)
     * Only a single-dyno is fully supported, `heroku ps:scale web=1`
-    * Kong's cluster will be bound to localhost, `127.0.0.1:7946`.
+    * Kong's cluster will be bound to localhost
     * Multiple dynos will not be recognized in the cluster.
   * [Heroku Private Space](https://www.heroku.com/private-spaces)
     * Scale horizontally from one to hundreds of dynos, `heroku ps:scale web=10`
@@ -24,27 +21,20 @@ Usage
 -----
 Get started by cloning heroku-kong and deploying it to a new Heroku app.
 
-The `serf` command must be installed locally to generate the cluster's shared secret. [Download Serf](https://www.serfdom.io/downloads.html)
-
 ```bash
 git clone https://github.com/heroku/heroku-kong.git
 cd heroku-kong
 
 # Create app in Common Runtime:
-heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git
+heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-kong.git
 # …or in a Private Space:
-heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git --space my-private-space
+heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-kong.git --space my-private-space
 
-heroku config:set KONG_CLUSTER_SECRET=`serf keygen`
-
-# If you want to try Instaclustr Cassandra, a paid add-on
-heroku addons:create instaclustr:production-light
+heroku addons:create heroku-postgresql:hobby-dev
 
 git push heroku master
 # …the first build will take approximately ten minutes; subsequent builds approx two-minutes.
 ```
-
-The [Procfile](Procfile) uses [runit](http://smarden.org/runit/) to supervise all of Kong's processes defined in [Procfile.web](Procfile.web).
 
 ### Commands
 
@@ -54,7 +44,7 @@ To use Kong CLI in a console:
 $ heroku run bash
 
 # Run Kong in the background, so you can issue commands:
-~ $ kong start -c $KONG_CONF
+~ $ kong start -c $KONG_CONF &
 # …Kong will start & continue running in the background of this interactive console.
 
 # Example commands:
@@ -69,32 +59,12 @@ The Heroku app must have several [config vars, as defined in the buildpack](http
 
 Kong is automatically configured at runtime with the `.profile.d/kong-12f.sh` script, which:
 
-  * renders the `config/kong.yml` file
+  * renders the `config/kong.conf` file
   * exports environment variables (see: `.profile.d/kong-env` in a running dyno)
 
-Revise [`config/kong.yml.etlua`](config/kong.yml.etlua) to suite your application.
+Revise [`config/kong.conf.etlua`](config/kong.conf.etlua) to suite your application.
 
-See: [Kong 0.7 Configuration Reference](https://getkong.org/docs/0.7.x/configuration/)
-
-### Cassandra
-
-You may connect to any Cassandra datastore accessible to your Heroku app using the `CASSANDRA_URL` config var as [documented in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
-
-Once Cassandra is attached to the app, Kong will automatically create the keyspace and run migrations.
-
-If you find that initial keyspace setup is required. Use [`cqlsh`](http://docs.datastax.com/en/cql/3.1/cql/cql_reference/cqlsh.html) to run [CQL](https://cassandra.apache.org/doc/cql3/CQL-2.1.html) queries:
-
-  ```shell
-$ CQLSH_HOST={SINGLE_IC_CONTACT_POINT} cqlsh --cqlversion 3.2.1 -u {IC_USER} -p {IC_PASSWORD}
-> CREATE KEYSPACE IF NOT EXISTS kong WITH replication = {'class':'NetworkTopologyStrategy', 'US_EAST_1':3};
-> GRANT ALL ON KEYSPACE kong TO iccassandra;
-> exit
-  ```
-
-Then, initialize DB schema [using a console](#commands):
-```bash
-~ $ kong migrations reset -c $KONG_CONF
-```
+See: [Kong 0.11 Configuration Reference](https://getkong.org/docs/0.11.x/configuration/)
 
 ### Kong plugins & additional Lua modules
 
@@ -105,14 +75,14 @@ Kong's Admin API has no built-in authentication. Its exposure must be limited to
 
 For Kong on Heroku, the Admin API listens on the dyno's localhost port 8001.
 
-That's the `admin_api_port` set in [`config/kong.yml.etlua`](config/kong.yml.etlua).
+That's the `admin_listen` set in [`config/kong.conf.etlua`](config/kong.conf.etlua).
 
 #### Access via [console](#commands)
 Make API requests to localhost with curl.
 
 ```bash
 $ heroku run bash
-> kong start -c $KONG_CONF
+> kong start -c $KONG_CONF &
 > curl http://localhost:8001
 ```
 
@@ -254,7 +224,7 @@ The `LIBRATO_*` config vars set-up by the add-on will be used for authorization,
 As a [12-factor](http://12factor.net) app, Heroku Kong already uses environment variables for configuration. Here's how to use those vars within your own code.
 
 1. Whitelist the variable name for use within Nginx 
-  * In the [**kong.yml** config files](config/) `nginx:` property add `env MY_VARIABLE;`
+  * In a [custom nginx config](https://getkong.org/docs/0.11.x/configuration/#custom-nginx-configuration) add `env MY_VARIABLE;`
 2. Access the variable in Lua plugins
   * Use `os.getenv('MY_VARIABLE')` to retrieve the value
 
@@ -265,14 +235,10 @@ To work with Kong locally on Mac OS X.
 ##### Setup
 
 1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
-1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da)
 1. Execute `./bin/setup`
 
 ##### Running
 
-* Cassandra needs to be running
-  * start `launchctl load ~/Library/LaunchAgents/homebrew.mxcl.cassandra.plist`
-  * stop `launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.cassandra.plist`
 * Execute `./bin/start`
 * Logs in `/usr/local/var/kong/logs/` 
 
