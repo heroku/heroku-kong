@@ -44,13 +44,13 @@ To use Kong CLI in a console:
 $ heroku run bash
 
 # Run Kong in the background, so you can issue commands:
-~ $ kong start -c $KONG_CONF &
+~ $ KONG_NGINX_DAEMON=on kong start -c $KONG_CONF &
 # …Kong will start & continue running in the background of this interactive console.
 
 # Example commands:
 ~ $ kong --help
 ~ $ kong migrations list -c $KONG_CONF
-~ $ curl http://localhost:8001/status
+~ $ curl http://localhost:$KONG_ADMIN_LISTEN/status
 ```
 
 ### Configuration
