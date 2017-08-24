@@ -1,6 +1,6 @@
 Kong Heroku app
 ===============
-[Kong CE 0.11.0](http://blog.mashape.com/kong-ce-0-11-0-released/) as a [12-factor](http://12factor.net) app.
+Deploy [Kong CE 0.11.0](http://blog.mashape.com/kong-ce-0-11-0-released/) clusters to Heroku Common Runtime and Private Spaces.
 
 Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
@@ -8,14 +8,6 @@ Requirements
 ------------
 * [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command)
 * [Heroku Postgres](https://elements.heroku.com/addons/heroku-postgresql)
-* Private network for [clustering](https://getkong.org/docs/0.11.x/clustering/)
-  * [Heroku Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime)
-    * Only a single-dyno is fully supported, `heroku ps:scale web=1`
-    * Kong's cluster will be bound to localhost
-    * Multiple dynos will not be recognized in the cluster.
-  * [Heroku Private Space](https://www.heroku.com/private-spaces)
-    * Scale horizontally from one to hundreds of dynos, `heroku ps:scale web=10`
-    * Kong's cluster connects via private subnet in the Space.
 
 Usage
 -----
@@ -92,7 +84,10 @@ Using Kong itself, you may expose the Admin API with authentication & rate limit
 From the console:
 ```bash
 # Create the authenticated `/kong-admin` API, targeting the localhost port:
-curl -i -X POST --url http://localhost:8001/apis/ --data 'name=kong-admin' --data 'upstream_url=http://localhost:8001/' --data 'request_path=/kong-admin' --data 'strip_request_path=true'
+curl http://localhost:8001/apis -i -X POST \
+  --data name=kong-admin
+  --data uris=/kong-admin
+  --data upstream_url=http://localhost:8001
 curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
 curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=rate-limiting' --data "config.minute=12"
 curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=key-auth' --data "config.hide_credentials=true"
