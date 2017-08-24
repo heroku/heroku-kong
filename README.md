@@ -44,13 +44,14 @@ To use Kong CLI in a console:
 $ heroku run bash
 
 # Run Kong in the background, so you can issue commands:
-~ $ KONG_NGINX_DAEMON=on kong start -c $KONG_CONF &
+~ $ KONG_NGINX_DAEMON=on kong start -c $KONG_CONF
 # …Kong will start & continue running in the background of this interactive console.
+# $ kong health -p /app/.heroku
 
 # Example commands:
 ~ $ kong --help
 ~ $ kong migrations list -c $KONG_CONF
-~ $ curl http://localhost:$KONG_ADMIN_LISTEN/status
+~ $ curl http://$KONG_ADMIN_LISTEN/status
 ```
 
 ### Configuration
@@ -61,6 +62,7 @@ Kong is automatically configured at runtime with the `.profile.d/kong-12f.sh` sc
 
   * renders the `config/kong.conf` file
   * exports environment variables (see: `.profile.d/kong-env` in a running dyno)
+  * may all be overridden by setting `KONG_`-prefixed config vars, e.g. `heroku config:set KONG_LOG_LEVEL=debug`
 
 Revise [`config/kong.conf.etlua`](config/kong.conf.etlua) to suite your application.
 
@@ -73,16 +75,14 @@ See [buildpack usage](https://github.com/heroku/heroku-buildpack-kong#usage)
 ### Protecting the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
 
-For Kong on Heroku, the Admin API listens on the dyno's localhost port 8001.
-
-That's the `admin_listen` set in [`config/kong.conf.etlua`](config/kong.conf.etlua).
+For Kong on Heroku, the Admin API listens privately at the value of environment variable `KONG_ADMIN_LISTEN` or `admin_listen` in [`config/kong.conf.etlua`](config/kong.conf.etlua).
 
 #### Access via [console](#commands)
 Make API requests to localhost with curl.
 
 ```bash
 $ heroku run bash
-> kong start -c $KONG_CONF &
+> KONG_NGINX_DAEMON=on kong start -c $KONG_CONF
 > curl http://localhost:8001
 ```
 
