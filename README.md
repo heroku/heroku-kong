@@ -15,15 +15,13 @@ Usage
 -----
 Get started by cloning heroku-kong and deploying it to a new Heroku app.
 
+✏️ *Replace variables such as `$APP_NAME` with values for your unique deployment.*
+
 ```bash
 git clone https://github.com/heroku/heroku-kong.git
 cd heroku-kong
 
-# Create app in Common Runtime:
-heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-kong.git
-# …or in a Private Space:
-heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-kong.git --space my-private-space
-
+heroku create $APP_NAME --buildpack https://github.com/heroku/heroku-buildpack-kong.git
 heroku addons:create heroku-postgresql:hobby-dev
 
 git push heroku master
@@ -42,7 +40,7 @@ $ heroku run bash
 
 # Then, use `curl` to issue Admin API commands
 # and `jq` to format the output:
-~ $ curl http://$KONG_ADMIN_LISTEN | jq
+~ $ curl http://$KONG_ADMIN_LISTEN | jq .
 
 # Example CLI commands:
 # (note some commands require the config file and others the prefix)
@@ -72,7 +70,7 @@ See [buildpack usage](https://github.com/heroku/heroku-buildpack-kong#usage)
 ### Protecting the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
 
-For Kong on Heroku, the Admin API listens privately at the value of environment variable `KONG_ADMIN_LISTEN` or `admin_listen` in [`config/kong.conf.etlua`](config/kong.conf.etlua), which defaults to port `8001`.
+For Kong on Heroku, the Admin API listens privately on `localhost:8001`.
 
 #### Authenticated Admin API
 Using Kong itself, you may expose the Admin API with authentication & rate limiting.
@@ -81,27 +79,40 @@ From the [admin console](#user-content-admin-console):
 ```bash
 # Create the authenticated `/kong-admin` API, targeting the localhost port:
 curl http://localhost:8001/apis -i -X POST \
-  --data name=kong-admin
-  --data uris=/kong-admin
-  --data upstream_url=http://localhost:8001 | jq
-curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
-curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=rate-limiting' --data "config.minute=12"
-curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=key-auth' --data "config.hide_credentials=true"
-curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=acl' --data "config.whitelist=kong-admin"
+  --data name=kong-admin \
+  --data uris=/kong-admin \
+  --data upstream_url=http://localhost:8001
+curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data 'name=request-size-limiting' \
+  --data "config.allowed_payload_size=8"
+curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data 'name=rate-limiting' \
+  --data "config.second=5"
+curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data 'name=key-auth' \
+  --data "config.hide_credentials=true"
+curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data 'name=acl' \
+  --data "config.whitelist=kong-admin"
 
 # Create a consumer with username and authentication credentials:
-curl -i -X POST --url http://localhost:8001/consumers/ --data 'username=8th-wonder'
-curl -i -X POST --url http://localhost:8001/consumers/8th-wonder/acls --data 'group=kong-admin'
-curl -i -X POST --url http://localhost:8001/consumers/8th-wonder/key-auth
-# …this response contains the `"key"`.
+curl http://localhost:8001/consumers/ -i -X POST \
+  --data 'username=8th-wonder'
+curl http://localhost:8001/consumers/8th-wonder/acls -i -X POST \
+  --data 'group=kong-admin'
+curl http://localhost:8001/consumers/8th-wonder/key-auth -i -X POST -d ''
+# …this response contains the `"key"`, use it for `$ADMIN_KEY` below.
 ```
 
 Now, access Kong's Admin API via the protected, public-facing proxy:
+
+✏️ *Replace variables such as `$APP_NAME` with values for your unique deployment.*
+
 ```bash
 # Set the request header:
-curl -H 'apikey: {kong-admin key}' https://kong-proxy-public.herokuapp.com/kong-admin/status
+curl -H 'apikey: $ADMIN_KEY' https://$APP_NAME.herokuapp.com/kong-admin/status
 # or use query params:
-curl https://kong-proxy-public.herokuapp.com/kong-admin/status?apikey={kong-admin key}
+curl https://$APP_NAME.herokuapp.com/kong-admin/status?apikey=$ADMIN_KEY
 ```
 
 
