@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -eu
+
+KONG_NGINX_DAEMON=on kong start -c ${KONG_CONF:-config/kong.conf} $@

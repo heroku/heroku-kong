@@ -6,8 +6,10 @@ Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
 Requirements
 ------------
-* [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command)
-* [Heroku Postgres](https://elements.heroku.com/addons/heroku-postgresql)
+* [Heroku](https://www.heroku.com/home)
+  * [command-line tools (CLI)](https://toolbelt.heroku.com)
+  * [a free account](https://signup.heroku.com)
+* [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
 Usage
 -----
@@ -28,22 +30,25 @@ git push heroku master
 # …the first build will take approximately ten minutes; subsequent builds approx two-minutes.
 ```
 
-### Commands
+### Admin Console
 
-To use Kong CLI in a console:
+Use Kong CLI and the Admin API in a [one-off dyno](https://devcenter.heroku.com/articles/one-off-dynos):
 
 ```bash
 $ heroku run bash
 
-# Run Kong in the background, so you can issue commands:
-~ $ KONG_NGINX_DAEMON=on kong start -c $KONG_CONF
-# …Kong will start & continue running in the background of this interactive console.
-# $ kong health -p /app/.heroku
+# Run Kong in the background:
+~ $ bin/background-start
 
-# Example commands:
-~ $ kong --help
+# Then, use `curl` to issue Admin API commands
+# and `jq` to format the output:
+~ $ curl http://$KONG_ADMIN_LISTEN | jq
+
+# Example CLI commands:
+# (note some commands require the config file and others the prefix)
 ~ $ kong migrations list -c $KONG_CONF
-~ $ curl http://$KONG_ADMIN_LISTEN/status
+~ $ kong health -p /app/.heroku
+~ $ kong stop -p /app/.heroku
 ```
 
 ### Configuration
@@ -67,27 +72,18 @@ See [buildpack usage](https://github.com/heroku/heroku-buildpack-kong#usage)
 ### Protecting the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
 
-For Kong on Heroku, the Admin API listens privately at the value of environment variable `KONG_ADMIN_LISTEN` or `admin_listen` in [`config/kong.conf.etlua`](config/kong.conf.etlua).
-
-#### Access via [console](#commands)
-Make API requests to localhost with curl.
-
-```bash
-$ heroku run bash
-> KONG_NGINX_DAEMON=on kong start -c $KONG_CONF
-> curl http://localhost:8001
-```
+For Kong on Heroku, the Admin API listens privately at the value of environment variable `KONG_ADMIN_LISTEN` or `admin_listen` in [`config/kong.conf.etlua`](config/kong.conf.etlua), which defaults to port `8001`.
 
 #### Authenticated Admin API
 Using Kong itself, you may expose the Admin API with authentication & rate limiting.
 
-From the console:
+From the [admin console](#user-content-admin-console):
 ```bash
 # Create the authenticated `/kong-admin` API, targeting the localhost port:
 curl http://localhost:8001/apis -i -X POST \
   --data name=kong-admin
   --data uris=/kong-admin
-  --data upstream_url=http://localhost:8001
+  --data upstream_url=http://localhost:8001 | jq
 curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
 curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=rate-limiting' --data "config.minute=12"
 curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=key-auth' --data "config.hide_credentials=true"
