@@ -23,9 +23,8 @@ events {
 > end
 }
 
-# Expose API credentials for "librato-analytics" plugin
-env LIBRATO_USER;
-env LIBRATO_TOKEN;
+# Expose config variables needed by plugins.
+env HELLO_WORLD_MESSAGE;
 
 http {
     include 'nginx-kong.conf';

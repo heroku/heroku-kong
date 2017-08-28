@@ -11,8 +11,8 @@ Requirements
   * [a free account](https://signup.heroku.com)
 * [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
-Usage
------
+Deploy
+------
 Get started by cloning heroku-kong and deploying it to a new Heroku app.
 
 ✏️ *Replace variables such as `$APP_NAME` with values for your unique deployment.*
@@ -28,14 +28,17 @@ git push heroku master
 # …the first build will take approximately ten minutes; subsequent builds approx two-minutes.
 ```
 
+Usage
+-----
+
 ### Admin Console
 
 Use Kong CLI and the Admin API in a [one-off dyno](https://devcenter.heroku.com/articles/one-off-dynos):
 
 ```bash
-$ heroku run bash
+heroku run bash
 
-# Run Kong in the background:
+# Run Kong in the background of the one-off dyno:
 ~ $ bin/background-start
 
 # Then, use `curl` to issue Admin API commands
@@ -46,34 +49,12 @@ $ heroku run bash
 # (note some commands require the config file and others the prefix)
 ~ $ kong migrations list -c $KONG_CONF
 ~ $ kong health -p /app/.heroku
-~ $ kong stop -p /app/.heroku
 ```
 
-### Configuration
+### Protected Admin API
+Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network. For Kong on Heroku, the Admin API listens privately on `localhost:8001`.
 
-The Heroku app must have several [config vars, as defined in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
-
-Kong is automatically configured at runtime with the `.profile.d/kong-12f.sh` script, which:
-
-  * renders the `config/kong.conf` file
-  * exports environment variables (see: `.profile.d/kong-env` in a running dyno)
-  * may all be overridden by setting `KONG_`-prefixed config vars, e.g. `heroku config:set KONG_LOG_LEVEL=debug`
-
-Revise [`config/kong.conf.etlua`](config/kong.conf.etlua) to suite your application.
-
-See: [Kong 0.11 Configuration Reference](https://getkong.org/docs/0.11.x/configuration/)
-
-### Kong plugins & additional Lua modules
-
-See [buildpack usage](https://github.com/heroku/heroku-buildpack-kong#usage)
-
-### Protecting the Admin API
-Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
-
-For Kong on Heroku, the Admin API listens privately on `localhost:8001`.
-
-#### Authenticated Admin API
-Using Kong itself, you may expose the Admin API with authentication & rate limiting.
+To make Kong Admin accessible from other locations, let's setup Kong itself to proxy its Admin API with key authentication, HTTPS-enforcement, and request rate & size limiting.
 
 From the [admin console](#user-content-admin-console):
 ```bash
@@ -81,7 +62,9 @@ From the [admin console](#user-content-admin-console):
 curl http://localhost:8001/apis -i -X POST \
   --data name=kong-admin \
   --data uris=/kong-admin \
-  --data upstream_url=http://localhost:8001
+  --data upstream_url=http://localhost:8001 \
+  --data https_only=true \
+  --data http_if_terminated=true
 curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
   --data "config.allowed_payload_size=8"
@@ -116,55 +99,133 @@ curl https://$APP_NAME.herokuapp.com/kong-admin/status?apikey=$ADMIN_KEY
 ```
 
 
+### Configuration
+
+Kong is automatically configured at runtime with a `.profile.d` script:
+
+  * renders the `config/kong.conf` file based on:
+    * the customizable [`config/kong.conf.etlua`](config/kong.conf.etlua) template
+    * values of [config vars, as defined in the buildpack](https://github.com/heroku/heroku-buildpack-kong#user-content-environment-variables)
+  * exports environment variables
+    * see: `.profile.d/kong-env` in a running dyno
+
+All file-based config may be overridden by setting `KONG_`-prefixed config vars, e.g. `heroku config:set KONG_LOG_LEVEL=debug`
+
+👓 See: [Kong 0.11 Configuration Reference](https://getkong.org/docs/0.11.x/configuration/)
+
+
+### Kong plugins & additional Lua modules
+
+👓 See: [buildpack usage](https://github.com/heroku/heroku-buildpack-kong#user-content-usage)
+
+
+Demos
+-----
+Usage examples and sample plugins are includes with this Heroku Kong app.
+
 ### Demo: [API Rate Limiting](https://getkong.org/plugins/rate-limiting/)
 
 Request [this Bay Lights API](https://kong-proxy-public.herokuapp.com/bay-lights/lights) more than five times in a minute, and you'll get **HTTP Status 429: API rate limit exceeded**, along with `X-Ratelimit-Limit-Minute` & `X-Ratelimit-Remaining-Minute` headers to help the API consumers regulate their usage.
 
 Try it in your shell terminal:
 ```bash
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 429
 ```
 
 Here's the whole configuration for this API rate limiter:
 
 ```bash
-curl -i -X POST --url http://localhost:8001/apis/ --data 'name=bay-lights' --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/' --data 'request_path=/bay-lights' --data 'strip_request_path=true'
-curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
-curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
-# Demo loading app-specific Kong plugins & Lua modules.
-curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=hello-world-header'
+curl http://localhost:8001/apis/ -i -X POST \
+  --data 'name=bay-lights' \
+  --data 'uris=/bay-lights' \
+  --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/'
+curl http://localhost:8001/apis/bay-lights/plugins/ -i -X POST \
+  --data 'name=request-size-limiting' \
+  --data "config.allowed_payload_size=8"
+curl http://localhost:8001/apis/bay-lights/plugins/ -i -X POST \
+  --data 'name=rate-limiting' \
+  --data "config.minute=5"
 ```
 
-### Demo: API translation, XML as JSON
+### Demo: custom plugin: hello-world-header
+
+[Custom plugins](https://getkong.org/docs/0.11.x/plugin-development/) allow you to observe and transform HTTP traffic using lightweight, high-performance [Lua](http://www.lua.org) code in Nginx [request processing contexts](https://getkong.org/docs/0.11.x/plugin-development/custom-logic/#available-request-contexts). Building on the [previous example](#user-content-demo-api-rate-limiting), let's add a simple plugin to Kong.
+
+[hello-world-header](lib/kong/plugins/hello-world-header/handler.lua) will add an HTTP response header **X-Hello-World** showing the date and a message from an environment variable.
+
+Activate this plugin for the API:
+
+```bash
+curl http://localhost:8001/apis/bay-lights/plugins/ -i -X POST \
+  --data 'name=hello-world-header'
+```
+
+Then, set a message through the Heroku config var:
+
+```bash
+heroku config:set HELLO_WORLD_MESSAGE='🌈🙈'
+# …the app will restart.
+```
+
+Now, when fetching an API response, notice the **X-Hello-World** header:
+
+```bash
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
+# ↩︎
+# HTTP/1.1 200 OK
+# Connection: keep-alive
+# Content-Type: application/json;charset=utf-8
+# Content-Length: 9204
+# X-Ratelimit-Limit-Minute: 5
+# X-Ratelimit-Remaining-Minute: 4
+# Server: Cowboy
+# Date: Mon, 28 Aug 2017 23:14:47 GMT
+# Strict-Transport-Security: max-age=31536000
+# X-Content-Type-Options: nosniff
+# Vary: Accept-Encoding
+# Request-Id: 6c815aae-a5e9-496f-b731-dc72bbe2b63e
+# Via: kong/0.11.0, 1.1 vegur
+# X-Hello-World: Today is 2017-08-28. 🌈🙈  <--- The injected header
+# X-Kong-Upstream-Latency: 49
+# X-Kong-Proxy-Latency: 161
+```
+
+
+### Demo: API translation, JSON→XML
 
 JSON/REST has taken over as the internet API lingua franca, shedding the complexity of XML/SOAP. The [National Digital Forecast Database [NDFD]](http://graphical.weather.gov/xml/) is a legacy XML/SOAP service.
 
-Here we demonstrate a custom plugin [ndfd-xml-as-json](lib/kong/plugins/ndfd-xml-as-json) to expose an JSON/REST API that fetches the maximum temperatures forecast for a location from the NDFD SOAP service. Using the single-resource concept of REST, the many variations of a SOAP interface may be broken out into elegant, individual JSON APIs.
+This app includes a sample, custom plugin [ndfd-xml-as-json](lib/kong/plugins/ndfd-xml-as-json). This plugin exposes a JSON API that returns the maximum temperatures forecast for a location from the NDFD SOAP service. Using the single-resource concept of REST, the many variations of a SOAP or other legacy interfaces may be broken out into elegant, individual JSON APIs.
 
 Try it in your shell terminal:
 ```bash
-curl --data '{"latitude":37.733795,"longitude":-122.446747}' https://kong-proxy-public.herokuapp.com/ndfd-max-temps
+curl https://kong-proxy-public.herokuapp.com/ndfd-max-temps \
+  --data '{"latitude":37.733795,"longitude":-122.446747}'
 # Response contains max temperatures forecast for San Francisco, CA
-curl --data '{"latitude":27.964157,"longitude":-82.452606}' https://kong-proxy-public.herokuapp.com/ndfd-max-temps
+
+curl https://kong-proxy-public.herokuapp.com/ndfd-max-temps \
+ --data '{"latitude":27.964157,"longitude":-82.452606}'
 # Response contains max temperatures forecast for Tampa, FL
-curl --data '{"latitude":41.696629,"longitude":-71.149994}' https://kong-proxy-public.herokuapp.com/ndfd-max-temps
+
+curl https://kong-proxy-public.herokuapp.com/ndfd-max-temps \
+  --data '{"latitude":41.696629,"longitude":-71.149994}'
 # Response contains max temperatures forecast for Fall River, MA
 ```
 
 Much more elegant than the legacy API. See the [sample request body](spec/data/ndfd-request.xml):
 ```bash
-curl --data @spec/data/ndfd-request.xml -H 'Content-Type:text/xml' -X POST http://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php
+curl --data @spec/data/ndfd-request.xml -H 'Content-Type:text/xml' -X POST https://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php
 # Response contains wrapped XML data. Enjoy decoding that.
 ```
 
@@ -173,34 +234,22 @@ This technique may be used to create a suite of cohesive JSON APIs out of variou
 Here's the configuration for this API translator:
 
 ```bash
-curl -X POST -v http://localhost:8001/apis --data 'name=ndfd-max-temps' --data 'upstream_url=http://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php' --data 'request_path=/ndfd-max-temps' --data 'strip_request_path=true'
-curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
-curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
-curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=ndfd-xml-as-json'
+curl http://localhost:8001/apis -i -X POST \
+  --data 'name=ndfd-max-temps' \
+  --data 'upstream_url=https://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php' \
+  --data 'uris=/ndfd-max-temps'
+curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
+  --data 'name=request-size-limiting' \
+  --data "config.allowed_payload_size=8"
+curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
+  --data 'name=rate-limiting' \
+  --data 'config.minute=5'
+curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
+  --data 'name=ndfd-xml-as-json'
 ```
 
-### Demo: API analytics, [Librato](https://elements.heroku.com/addons/librato)
+👓 See the implementation of the custom plugin's [Lua source code](lib/kong/plugins/ndfd-xml-as-json), [unit tests](spec/unit/kong/plugins/ndfd-xml-as-json/handler_spec.lua), and [integration tests](spec/integration/kong/plugins/ndfd-xml-as-json_spec.lua).
 
-Collect per-API metrics, explore, and set alerts on them with Librato. This [`librato-analytics`](lib/kong/plugins/librato-analytics) plugin demonstrates near-realtime (~1-minute delay), batch-oriented (up 300 metrics/post), asynchronous (non-blocking to proxy traffic) pushes of Kong/Nginx metrics to [Librato's Metrics API](http://dev.librato.com/v1/metrics).
-
-![Screenshot of Librato Kong metrics](http://marsikai.s3.amazonaws.com/librato-kong-bay-lights.png)
-
-The per-API metrics are sent by source, named "kong-{API-NAME}":
-  * request size (bytes)
-  * response size (bytes)
-  * kong latency (milliseconds)
-  * upstream latency (milliseconds)
-  * response latency (milliseconds)
-
-*This demo requires your own Heroku Kong instance with the Librato add-on. Kong sends custom metrics, so a paid plan of any level is required.*
-
-Here's the plugin configuration. Example based on the Bay Lights API example above:
-
-```bash
-curl -X POST -v http://localhost:8001/apis/bay-lights/plugins/ --data 'name=librato-analytics' --data "config.verify_ssl=false"
-```
-
-The `LIBRATO_*` config vars set-up by the add-on will be used for authorization, but can be overridden by explicitly setting `config.username` & `config.token` for specific instances of the Kong plugin.
 
 ### Dev Notes
 
@@ -220,15 +269,6 @@ The `LIBRATO_*` config vars set-up by the add-on will be used for authorization,
 * [resty-http](https://github.com/pintsized/lua-resty-http), Nginx-Lua co-routine based HTTP client
 * [Serpent](http://notebook.kulchenko.com/programming/serpent-lua-serializer-pretty-printer), inspect values
 * [Busted](http://olivinelabs.com/busted/), testing framework
-
-#### Using Environment Variables in Plugins
-
-As a [12-factor](http://12factor.net) app, Heroku Kong already uses environment variables for configuration. Here's how to use those vars within your own code.
-
-1. Whitelist the variable name for use within Nginx 
-  * In a [custom nginx config](https://getkong.org/docs/0.11.x/configuration/#custom-nginx-configuration) add `env MY_VARIABLE;`
-2. Access the variable in Lua plugins
-  * Use `os.getenv('MY_VARIABLE')` to retrieve the value
 
 #### Local Development
 

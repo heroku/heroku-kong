@@ -11,7 +11,7 @@ function HelloWorld:header_filter(config)
   HelloWorld.super.header_filter(self)
 
   local now = date()
-  ngx.header["X-Hello-World"] = "Today is "..now:fmt("%F")
+  ngx.header["X-Hello-World"] = "Today is "..now:fmt("%F")..". "..(os.getenv('HELLO_WORLD_MESSAGE') or "")
 end
 
 return HelloWorld
