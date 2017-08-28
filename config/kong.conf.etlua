@@ -41,7 +41,7 @@ proxy_access_log = off                    # Path for proxy port request access
                                           # will be placed under the `prefix`
                                           # location.
 
-#proxy_error_log = logs/error.log         # Path for proxy port request error
+proxy_error_log = /dev/stderr             # Path for proxy port request error
                                           # logs. Granularity of these logs is
                                           # adjusted by the `log_level`
                                           # directive.
@@ -53,7 +53,7 @@ admin_access_log = off                    # Path for Admin API request access
                                           # will be placed under the `prefix`
                                           # location.
 
-#admin_error_log = logs/error.log         # Path for Admin API request error
+admin_error_log = /dev/stderr             # Path for Admin API request error
                                           # logs. Granularity of these logs is
                                           # adjusted by the `log_level`
                                           # directive.
