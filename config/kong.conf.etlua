@@ -192,7 +192,7 @@ admin_ssl = off                  # Determines if Nginx should be listening for
                                  # and "X-Kong-Upstream-Latency" response
                                  # header fields.
 
-#trusted_ips =                   # Defines trusted IP addresses blocks that are
+trusted_ips = 10.0.0.0/8         # Defines trusted IP addresses blocks that are
                                  # known to send correct X-Forwarded-* headers.
                                  # Requests from trusted IPs make Kong forward
                                  # their X-Forwarded-* headers upstream.
@@ -214,7 +214,7 @@ admin_ssl = off                  # Determines if Nginx should be listening for
 # See http://nginx.org/en/docs/http/ngx_http_realip_module.html for
 # examples of accepted values.
 
-#real_ip_header = X-Real-IP      # Defines the request header field whose value
+real_ip_header = X-Forwarded-For # Defines the request header field whose value
                                  # will be used to replace the client address.
                                  # This value sets the ngx_http_realip_module
                                  # directive of the same name in the Nginx
@@ -232,7 +232,7 @@ admin_ssl = off                  # Determines if Nginx should be listening for
 # See https://www.nginx.com/resources/admin-guide/proxy-protocol/ for more
 # details about the `proxy_protocol` parameter.
 
-#real_ip_recursive = off         # This value sets the ngx_http_realip_module
+real_ip_recursive = on           # This value sets the ngx_http_realip_module
                                  # directive of the same name in the Nginx
                                  # configuration.
 # Note:
