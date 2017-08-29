@@ -1,8 +1,10 @@
 Kong Heroku app
 ===============
-Deploy [Kong CE 0.11.0](http://blog.mashape.com/kong-ce-0-11-0-released/) clusters to Heroku Common Runtime and Private Spaces.
+Deploy [Kong community edition 0.11.0](http://blog.mashape.com/kong-ce-0-11-0-released/) clusters to Heroku Common Runtime and Private Spaces.
 
 Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
+
+🔬 This is a community proof-of-concept: [MIT license](LICENSE)
 
 Requirements
 ------------
