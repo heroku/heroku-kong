@@ -11,6 +11,17 @@ Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 Usage
 -----
 
+To use Admin console on a freshly-deployed app, clone and connect this repo (or your own fork) to the Heroku app:
+
+```bash
+git clone https://github.com/heroku/heroku-kong.git
+cd heroku-kong
+
+# Use the name of the Heroku app:
+heroku git:remote --app $APP_NAME
+heroku info
+```
+
 ### Admin Console
 
 Use Kong CLI and the Admin API in a [one-off dyno](https://devcenter.heroku.com/articles/one-off-dynos):
