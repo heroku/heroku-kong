@@ -6,43 +6,7 @@ Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
 🔬 This is a community proof-of-concept: [MIT license](LICENSE)
 
-Requirements
-------------
-* [Heroku](https://www.heroku.com/home)
-  * [command-line tools (CLI)](https://toolbelt.heroku.com)
-  * [a free account](https://signup.heroku.com)
-* [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-
-Deploy
-------
-Get started by cloning heroku-kong and deploying it to a new Heroku app.
-
-### [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy) & Clone
-
-To work with the app code locally, clone and connect this repo (or your own fork) to the new Heroku app:
-
-```bash
-git clone https://github.com/heroku/heroku-kong.git
-cd heroku-kong
-
-# Use the name of the Heroku app you just deployed:
-heroku git:remote -a $APP_NAME
-```
-
-### Clone & Push
-
-✏️ *Replace variables such as `$APP_NAME` with values for your unique deployment.*
-
-```bash
-git clone https://github.com/heroku/heroku-kong.git
-cd heroku-kong
-
-heroku create $APP_NAME --buildpack https://github.com/heroku/heroku-buildpack-kong.git
-heroku addons:create heroku-postgresql:hobby-dev
-
-git push heroku master
-# …the first build will take approximately ten minutes; subsequent builds approx two-minutes.
-```
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
 Usage
 -----
@@ -290,6 +254,26 @@ curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
 
 To work with Kong locally on Mac OS X.
 
+##### Requirements
+
+* [Heroku](https://www.heroku.com/home)
+  * [command-line tools (CLI)](https://toolbelt.heroku.com)
+  * [a free account](https://signup.heroku.com)
+* [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+
+##### Clone
+
+Clone and connect this repo (or your own fork) to the Heroku app:
+
+```bash
+git clone https://github.com/heroku/heroku-kong.git
+cd heroku-kong
+
+# Use the name of the Heroku app:
+heroku git:remote --app $APP_NAME
+heroku info
+```
+
 ##### Setup
 
 1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
@@ -306,7 +290,10 @@ To work with Kong locally on Mac OS X.
 
 ##### Running
 
-* Execute `./bin/start`
+```bash
+bin/start
+```
+
 * Logs in `/usr/local/var/kong/logs/` 
 * Prefix is `/usr/local/var/kong` for commands like:
   * `kong health -p /usr/local/var/kong`
@@ -316,8 +303,11 @@ To work with Kong locally on Mac OS X.
 
 Any test-specific Lua rocks should be specified in `.luarocks_test` file, so that they are not installed when the app is deployed.
 
-1. Add tests in `spec/`
+Add tests in `spec/`:
+
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
   * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
-1. Execute `bin/busted`
 
+```bash
+bin/busted
+```
