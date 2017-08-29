@@ -1,148 +1,129 @@
 Kong Heroku app
 ===============
-[Kong 0.7.0](http://blog.mashape.com/kong-0-7-0-released/) as a [12-factor](http://12factor.net) app.
-
-🚨 **This Heroku app is no longer in development. It uses an outdated version of Kong.** It remains here on Github only to support existing deployments.
+Deploy [Kong community edition 0.11.0](http://blog.mashape.com/kong-ce-0-11-0-released/) clusters to Heroku Common Runtime and Private Spaces.
 
 Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
+🔬 This is a community proof-of-concept: [MIT license](LICENSE)
+
 Requirements
 ------------
-* [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command)
-* Cassandra datastore
-  * [Instaclustr](https://elements.heroku.com/addons/instaclustr). See: [Cassandra notes](#cassandra)
-* Private network for [clustering](https://getkong.org/docs/0.7.x/clustering/)
-  * [Heroku Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime)
-    * Only a single-dyno is fully supported, `heroku ps:scale web=1`
-    * Kong's cluster will be bound to localhost, `127.0.0.1:7946`.
-    * Multiple dynos will not be recognized in the cluster.
-  * [Heroku Private Space](https://www.heroku.com/private-spaces)
-    * Scale horizontally from one to hundreds of dynos, `heroku ps:scale web=10`
-    * Kong's cluster connects via private subnet in the Space.
+* [Heroku](https://www.heroku.com/home)
+  * [command-line tools (CLI)](https://toolbelt.heroku.com)
+  * [a free account](https://signup.heroku.com)
+* [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
-Usage
------
+Deploy
+------
 Get started by cloning heroku-kong and deploying it to a new Heroku app.
 
-The `serf` command must be installed locally to generate the cluster's shared secret. [Download Serf](https://www.serfdom.io/downloads.html)
+✏️ *Replace variables such as `$APP_NAME` with values for your unique deployment.*
 
 ```bash
 git clone https://github.com/heroku/heroku-kong.git
 cd heroku-kong
 
-# Create app in Common Runtime:
-heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git
-# …or in a Private Space:
-heroku create my-proxy-app --buildpack https://github.com/heroku/heroku-buildpack-multi.git --space my-private-space
-
-heroku config:set KONG_CLUSTER_SECRET=`serf keygen`
-
-# If you want to try Instaclustr Cassandra, a paid add-on
-heroku addons:create instaclustr:production-light
+heroku create $APP_NAME --buildpack https://github.com/heroku/heroku-buildpack-kong.git
+heroku addons:create heroku-postgresql:hobby-dev
 
 git push heroku master
 # …the first build will take approximately ten minutes; subsequent builds approx two-minutes.
 ```
 
-The [Procfile](Procfile) uses [runit](http://smarden.org/runit/) to supervise all of Kong's processes defined in [Procfile.web](Procfile.web).
+Usage
+-----
 
-### Commands
+### Admin Console
 
-To use Kong CLI in a console:
+Use Kong CLI and the Admin API in a [one-off dyno](https://devcenter.heroku.com/articles/one-off-dynos):
 
 ```bash
-$ heroku run bash
+heroku run bash
 
-# Run Kong in the background, so you can issue commands:
-~ $ kong start -c $KONG_CONF
-# …Kong will start & continue running in the background of this interactive console.
+# Run Kong in the background of the one-off dyno:
+~ $ bin/background-start
 
-# Example commands:
-~ $ kong --help
+# Then, use `curl` to issue Admin API commands
+# and `jq` to format the output:
+~ $ curl http://$KONG_ADMIN_LISTEN | jq .
+
+# Example CLI commands:
+# (note some commands require the config file and others the prefix)
 ~ $ kong migrations list -c $KONG_CONF
-~ $ curl http://localhost:8001/status
+~ $ kong health -p /app/.heroku
 ```
 
-### Configuration
+### Protected Admin API
+Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network. For Kong on Heroku, the Admin API listens privately on `localhost:8001`.
 
-The Heroku app must have several [config vars, as defined in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
+To make Kong Admin accessible from other locations, let's setup Kong itself to proxy its Admin API with key authentication, HTTPS-enforcement, and request rate & size limiting.
 
-Kong is automatically configured at runtime with the `.profile.d/kong-12f.sh` script, which:
-
-  * renders the `config/kong.yml` file
-  * exports environment variables (see: `.profile.d/kong-env` in a running dyno)
-
-Revise [`config/kong.yml.etlua`](config/kong.yml.etlua) to suite your application.
-
-See: [Kong 0.7 Configuration Reference](https://getkong.org/docs/0.7.x/configuration/)
-
-### Cassandra
-
-You may connect to any Cassandra datastore accessible to your Heroku app using the `CASSANDRA_URL` config var as [documented in the buildpack](https://github.com/heroku/heroku-buildpack-kong#usage).
-
-Once Cassandra is attached to the app, Kong will automatically create the keyspace and run migrations.
-
-If you find that initial keyspace setup is required. Use [`cqlsh`](http://docs.datastax.com/en/cql/3.1/cql/cql_reference/cqlsh.html) to run [CQL](https://cassandra.apache.org/doc/cql3/CQL-2.1.html) queries:
-
-  ```shell
-$ CQLSH_HOST={SINGLE_IC_CONTACT_POINT} cqlsh --cqlversion 3.2.1 -u {IC_USER} -p {IC_PASSWORD}
-> CREATE KEYSPACE IF NOT EXISTS kong WITH replication = {'class':'NetworkTopologyStrategy', 'US_EAST_1':3};
-> GRANT ALL ON KEYSPACE kong TO iccassandra;
-> exit
-  ```
-
-Then, initialize DB schema [using a console](#commands):
-```bash
-~ $ kong migrations reset -c $KONG_CONF
-```
-
-### Kong plugins & additional Lua modules
-
-See [buildpack usage](https://github.com/heroku/heroku-buildpack-kong#usage)
-
-### Protecting the Admin API
-Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network.
-
-For Kong on Heroku, the Admin API listens on the dyno's localhost port 8001.
-
-That's the `admin_api_port` set in [`config/kong.yml.etlua`](config/kong.yml.etlua).
-
-#### Access via [console](#commands)
-Make API requests to localhost with curl.
-
-```bash
-$ heroku run bash
-> kong start -c $KONG_CONF
-> curl http://localhost:8001
-```
-
-#### Authenticated Admin API
-Using Kong itself, you may expose the Admin API with authentication & rate limiting.
-
-From the console:
+From the [admin console](#user-content-admin-console):
 ```bash
 # Create the authenticated `/kong-admin` API, targeting the localhost port:
-curl -i -X POST --url http://localhost:8001/apis/ --data 'name=kong-admin' --data 'upstream_url=http://localhost:8001/' --data 'request_path=/kong-admin' --data 'strip_request_path=true'
-curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
-curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=rate-limiting' --data "config.minute=12"
-curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=key-auth' --data "config.hide_credentials=true"
-curl -i -X POST --url http://localhost:8001/apis/kong-admin/plugins/ --data 'name=acl' --data "config.whitelist=kong-admin"
+curl http://localhost:8001/apis -i -X POST \
+  --data name=kong-admin \
+  --data uris=/kong-admin \
+  --data upstream_url=http://localhost:8001 \
+  --data https_only=true \
+  --data http_if_terminated=true
+curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data 'name=request-size-limiting' \
+  --data "config.allowed_payload_size=8"
+curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data 'name=rate-limiting' \
+  --data "config.second=5"
+curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data 'name=key-auth' \
+  --data "config.hide_credentials=true"
+curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data 'name=acl' \
+  --data "config.whitelist=kong-admin"
 
 # Create a consumer with username and authentication credentials:
-curl -i -X POST --url http://localhost:8001/consumers/ --data 'username=8th-wonder'
-curl -i -X POST --url http://localhost:8001/consumers/8th-wonder/acls --data 'group=kong-admin'
-curl -i -X POST --url http://localhost:8001/consumers/8th-wonder/key-auth
-# …this response contains the `"key"`.
+curl http://localhost:8001/consumers/ -i -X POST \
+  --data 'username=8th-wonder'
+curl http://localhost:8001/consumers/8th-wonder/acls -i -X POST \
+  --data 'group=kong-admin'
+curl http://localhost:8001/consumers/8th-wonder/key-auth -i -X POST -d ''
+# …this response contains the `"key"`, use it for `$ADMIN_KEY` below.
 ```
 
 Now, access Kong's Admin API via the protected, public-facing proxy:
+
+✏️ *Replace variables such as `$APP_NAME` with values for your unique deployment.*
+
 ```bash
 # Set the request header:
-curl -H 'apikey: {kong-admin key}' https://kong-proxy-public.herokuapp.com/kong-admin/status
+curl -H 'apikey: $ADMIN_KEY' https://$APP_NAME.herokuapp.com/kong-admin/status
 # or use query params:
-curl https://kong-proxy-public.herokuapp.com/kong-admin/status?apikey={kong-admin key}
+curl https://$APP_NAME.herokuapp.com/kong-admin/status?apikey=$ADMIN_KEY
 ```
 
+
+### Configuration
+
+Kong is automatically configured at runtime with a `.profile.d` script:
+
+  * renders the `config/kong.conf` file based on:
+    * the customizable [`config/kong.conf.etlua`](config/kong.conf.etlua) template
+    * values of [config vars, as defined in the buildpack](https://github.com/heroku/heroku-buildpack-kong#user-content-environment-variables)
+  * exports environment variables
+    * see: `.profile.d/kong-env` in a running dyno
+
+All file-based config may be overridden by setting `KONG_`-prefixed config vars, e.g. `heroku config:set KONG_LOG_LEVEL=debug`
+
+👓 See: [Kong 0.11 Configuration Reference](https://getkong.org/docs/0.11.x/configuration/)
+
+
+### Kong plugins & additional Lua modules
+
+👓 See: [buildpack usage](https://github.com/heroku/heroku-buildpack-kong#user-content-usage)
+
+
+Demos
+-----
+Usage examples and sample plugins are includes with this Heroku Kong app.
 
 ### Demo: [API Rate Limiting](https://getkong.org/plugins/rate-limiting/)
 
@@ -150,49 +131,103 @@ Request [this Bay Lights API](https://kong-proxy-public.herokuapp.com/bay-lights
 
 Try it in your shell terminal:
 ```bash
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 200 OK
-curl -I https://kong-proxy-public.herokuapp.com/bay-lights/lights
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # HTTP/1.1 429
 ```
 
 Here's the whole configuration for this API rate limiter:
 
 ```bash
-curl -i -X POST --url http://localhost:8001/apis/ --data 'name=bay-lights' --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/' --data 'request_path=/bay-lights' --data 'strip_request_path=true'
-curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
-curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
-# Demo loading app-specific Kong plugins & Lua modules.
-curl -i -X POST --url http://localhost:8001/apis/bay-lights/plugins/ --data 'name=hello-world-header'
+curl http://localhost:8001/apis/ -i -X POST \
+  --data 'name=bay-lights' \
+  --data 'uris=/bay-lights' \
+  --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/'
+curl http://localhost:8001/apis/bay-lights/plugins/ -i -X POST \
+  --data 'name=request-size-limiting' \
+  --data "config.allowed_payload_size=8"
+curl http://localhost:8001/apis/bay-lights/plugins/ -i -X POST \
+  --data 'name=rate-limiting' \
+  --data "config.minute=5"
 ```
 
-### Demo: API translation, XML as JSON
+### Demo: custom plugin: hello-world-header
+
+[Custom plugins](https://getkong.org/docs/0.11.x/plugin-development/) allow you to observe and transform HTTP traffic using lightweight, high-performance [Lua](http://www.lua.org) code in Nginx [request processing contexts](https://getkong.org/docs/0.11.x/plugin-development/custom-logic/#available-request-contexts). Building on the [previous example](#user-content-demo-api-rate-limiting), let's add a simple plugin to Kong.
+
+[hello-world-header](lib/kong/plugins/hello-world-header/handler.lua) will add an HTTP response header **X-Hello-World** showing the date and a message from an environment variable.
+
+Activate this plugin for the API:
+
+```bash
+curl http://localhost:8001/apis/bay-lights/plugins/ -i -X POST \
+  --data 'name=hello-world-header'
+```
+
+Then, set a message through the Heroku config var:
+
+```bash
+heroku config:set HELLO_WORLD_MESSAGE='🌈🙈'
+# …the app will restart.
+```
+
+Now, when fetching an API response, notice the **X-Hello-World** header:
+
+```bash
+curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
+# ↩︎
+# HTTP/1.1 200 OK
+# Connection: keep-alive
+# Content-Type: application/json;charset=utf-8
+# Content-Length: 9204
+# X-Ratelimit-Limit-Minute: 5
+# X-Ratelimit-Remaining-Minute: 4
+# Server: Cowboy
+# Date: Mon, 28 Aug 2017 23:14:47 GMT
+# Strict-Transport-Security: max-age=31536000
+# X-Content-Type-Options: nosniff
+# Vary: Accept-Encoding
+# Request-Id: 6c815aae-a5e9-496f-b731-dc72bbe2b63e
+# Via: kong/0.11.0, 1.1 vegur
+# X-Hello-World: Today is 2017-08-28. 🌈🙈  <--- The injected header
+# X-Kong-Upstream-Latency: 49
+# X-Kong-Proxy-Latency: 161
+```
+
+
+### Demo: API translation, JSON→XML
 
 JSON/REST has taken over as the internet API lingua franca, shedding the complexity of XML/SOAP. The [National Digital Forecast Database [NDFD]](http://graphical.weather.gov/xml/) is a legacy XML/SOAP service.
 
-Here we demonstrate a custom plugin [ndfd-xml-as-json](lib/kong/plugins/ndfd-xml-as-json) to expose an JSON/REST API that fetches the maximum temperatures forecast for a location from the NDFD SOAP service. Using the single-resource concept of REST, the many variations of a SOAP interface may be broken out into elegant, individual JSON APIs.
+This app includes a sample, custom plugin [ndfd-xml-as-json](lib/kong/plugins/ndfd-xml-as-json). This plugin exposes a JSON API that returns the maximum temperatures forecast for a location from the NDFD SOAP service. Using the single-resource concept of REST, the many variations of a SOAP or other legacy interfaces may be broken out into elegant, individual JSON APIs.
 
 Try it in your shell terminal:
 ```bash
-curl --data '{"latitude":37.733795,"longitude":-122.446747}' https://kong-proxy-public.herokuapp.com/ndfd-max-temps
+curl https://kong-proxy-public.herokuapp.com/ndfd-max-temps \
+  --data '{"latitude":37.733795,"longitude":-122.446747}'
 # Response contains max temperatures forecast for San Francisco, CA
-curl --data '{"latitude":27.964157,"longitude":-82.452606}' https://kong-proxy-public.herokuapp.com/ndfd-max-temps
+
+curl https://kong-proxy-public.herokuapp.com/ndfd-max-temps \
+ --data '{"latitude":27.964157,"longitude":-82.452606}'
 # Response contains max temperatures forecast for Tampa, FL
-curl --data '{"latitude":41.696629,"longitude":-71.149994}' https://kong-proxy-public.herokuapp.com/ndfd-max-temps
+
+curl https://kong-proxy-public.herokuapp.com/ndfd-max-temps \
+  --data '{"latitude":41.696629,"longitude":-71.149994}'
 # Response contains max temperatures forecast for Fall River, MA
 ```
 
 Much more elegant than the legacy API. See the [sample request body](spec/data/ndfd-request.xml):
 ```bash
-curl --data @spec/data/ndfd-request.xml -H 'Content-Type:text/xml' -X POST http://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php
+curl --data @spec/data/ndfd-request.xml -H 'Content-Type:text/xml' -X POST https://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php
 # Response contains wrapped XML data. Enjoy decoding that.
 ```
 
@@ -201,34 +236,22 @@ This technique may be used to create a suite of cohesive JSON APIs out of variou
 Here's the configuration for this API translator:
 
 ```bash
-curl -X POST -v http://localhost:8001/apis --data 'name=ndfd-max-temps' --data 'upstream_url=http://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php' --data 'request_path=/ndfd-max-temps' --data 'strip_request_path=true'
-curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=request-size-limiting' --data "config.allowed_payload_size=8"
-curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=rate-limiting' --data "config.minute=5"
-curl -X POST -v http://localhost:8001/apis/ndfd-max-temps/plugins/ --data 'name=ndfd-xml-as-json'
+curl http://localhost:8001/apis -i -X POST \
+  --data 'name=ndfd-max-temps' \
+  --data 'upstream_url=https://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php' \
+  --data 'uris=/ndfd-max-temps'
+curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
+  --data 'name=request-size-limiting' \
+  --data "config.allowed_payload_size=8"
+curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
+  --data 'name=rate-limiting' \
+  --data 'config.minute=5'
+curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
+  --data 'name=ndfd-xml-as-json'
 ```
 
-### Demo: API analytics, [Librato](https://elements.heroku.com/addons/librato)
+👓 See the implementation of the custom plugin's [Lua source code](lib/kong/plugins/ndfd-xml-as-json), [unit tests](spec/unit/kong/plugins/ndfd-xml-as-json/handler_spec.lua), and [integration tests](spec/integration/kong/plugins/ndfd-xml-as-json_spec.lua).
 
-Collect per-API metrics, explore, and set alerts on them with Librato. This [`librato-analytics`](lib/kong/plugins/librato-analytics) plugin demonstrates near-realtime (~1-minute delay), batch-oriented (up 300 metrics/post), asynchronous (non-blocking to proxy traffic) pushes of Kong/Nginx metrics to [Librato's Metrics API](http://dev.librato.com/v1/metrics).
-
-![Screenshot of Librato Kong metrics](http://marsikai.s3.amazonaws.com/librato-kong-bay-lights.png)
-
-The per-API metrics are sent by source, named "kong-{API-NAME}":
-  * request size (bytes)
-  * response size (bytes)
-  * kong latency (milliseconds)
-  * upstream latency (milliseconds)
-  * response latency (milliseconds)
-
-*This demo requires your own Heroku Kong instance with the Librato add-on. Kong sends custom metrics, so a paid plan of any level is required.*
-
-Here's the plugin configuration. Example based on the Bay Lights API example above:
-
-```bash
-curl -X POST -v http://localhost:8001/apis/bay-lights/plugins/ --data 'name=librato-analytics' --data "config.verify_ssl=false"
-```
-
-The `LIBRATO_*` config vars set-up by the add-on will be used for authorization, but can be overridden by explicitly setting `config.username` & `config.token` for specific instances of the Kong plugin.
 
 ### Dev Notes
 
@@ -249,15 +272,6 @@ The `LIBRATO_*` config vars set-up by the add-on will be used for authorization,
 * [Serpent](http://notebook.kulchenko.com/programming/serpent-lua-serializer-pretty-printer), inspect values
 * [Busted](http://olivinelabs.com/busted/), testing framework
 
-#### Using Environment Variables in Plugins
-
-As a [12-factor](http://12factor.net) app, Heroku Kong already uses environment variables for configuration. Here's how to use those vars within your own code.
-
-1. Whitelist the variable name for use within Nginx 
-  * In the [**kong.yml** config files](config/) `nginx:` property add `env MY_VARIABLE;`
-2. Access the variable in Lua plugins
-  * Use `os.getenv('MY_VARIABLE')` to retrieve the value
-
 #### Local Development
 
 To work with Kong locally on Mac OS X.
@@ -265,16 +279,24 @@ To work with Kong locally on Mac OS X.
 ##### Setup
 
 1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
-1. [Install Cassandra](https://gist.github.com/mars/a303a2616f27b46d72da)
+1. Create the Postgres user & databases:
+    
+    ```bash
+    createuser --pwprompt kong
+    # set the password "kong"
+
+    createdb --owner=kong heroku_kong_dev
+    createdb --owner=kong heroku_kong_test
+    ```
 1. Execute `./bin/setup`
 
 ##### Running
 
-* Cassandra needs to be running
-  * start `launchctl load ~/Library/LaunchAgents/homebrew.mxcl.cassandra.plist`
-  * stop `launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.cassandra.plist`
 * Execute `./bin/start`
 * Logs in `/usr/local/var/kong/logs/` 
+* Prefix is `/usr/local/var/kong` for commands like:
+  * `kong health -p /usr/local/var/kong`
+  * `kong stop -p /usr/local/var/kong`
 
 ##### Testing
 
@@ -283,6 +305,5 @@ Any test-specific Lua rocks should be specified in `.luarocks_test` file, so tha
 1. Add tests in `spec/`
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
   * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
-1. Execute `source .profile.local`
-1. Execute `busted` to run the tests
+1. Execute `bin/busted`
 

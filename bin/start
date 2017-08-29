@@ -4,4 +4,4 @@ set -eu
 # Script to run the local development environment.
 
 source .profile.local
-kong start -c config/kong_DEVELOPMENT.yml
+eval "kong start -c config/kong_DEVELOPMENT.conf $@"
