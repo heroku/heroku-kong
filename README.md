@@ -17,6 +17,20 @@ Deploy
 ------
 Get started by cloning heroku-kong and deploying it to a new Heroku app.
 
+### [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy) & Clone
+
+To work with the app code locally, clone and connect this repo (or your own fork) to the new Heroku app:
+
+```bash
+git clone https://github.com/heroku/heroku-kong.git
+cd heroku-kong
+
+# Use the name of the Heroku app you just deployed:
+heroku git:remote -a $APP_NAME
+```
+
+### Clone & Push
+
 ✏️ *Replace variables such as `$APP_NAME` with values for your unique deployment.*
 
 ```bash

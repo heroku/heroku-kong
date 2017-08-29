@@ -11,11 +11,11 @@
   ],
   "website": "https://getkong.org/",
   "repository": "https://github.com/heroku/heroku-kong.git",
-  "logo": "http://i.imgur.com/4jyQQAZ.png",
-  "success_url": "http://getkong.org/docs/latest/getting-started/quickstart/",
+  "success_url": "https://github.com/heroku/heroku-kong#user-content-usage",
   "buildpacks": [{
-    "url": "https://github.com/heroku/heroku-buildpack-multi.git"
+    "url": "https://github.com/heroku/heroku-buildpack-kong.git"
   }],
   "addons": [
+    "heroku-postgresql"
   ]
 }
