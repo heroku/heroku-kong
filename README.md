@@ -277,12 +277,24 @@ To work with Kong locally on Mac OS X.
 ##### Setup
 
 1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
+1. Create the Postgres user & databases:
+    
+    ```bash
+    createuser --pwprompt kong
+    # set the password "kong"
+
+    createdb --owner=kong heroku_kong_dev
+    createdb --owner=kong heroku_kong_test
+    ```
 1. Execute `./bin/setup`
 
 ##### Running
 
 * Execute `./bin/start`
 * Logs in `/usr/local/var/kong/logs/` 
+* Prefix is `/usr/local/var/kong` for commands like:
+  * `kong health -p /usr/local/var/kong`
+  * `kong stop -p /usr/local/var/kong`
 
 ##### Testing
 
@@ -291,6 +303,5 @@ Any test-specific Lua rocks should be specified in `.luarocks_test` file, so tha
 1. Add tests in `spec/`
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
   * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
-1. Execute `source .profile.local`
-1. Execute `busted` to run the tests
+1. Execute `bin/busted`
 

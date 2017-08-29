@@ -1,2 +1,2 @@
-config/kong.yml
-config/cassandra.cert
+config/kong.conf
+logs/
