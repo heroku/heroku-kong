@@ -1,33 +1,57 @@
-local http_client = require "kong.tools.http_client"
-local spec_helper = require "spec.spec_helpers"
+local helpers = require "spec.helpers"
 
 describe("hello-world-header plugin", function()
+
+  local proxy_client
+  local admin_client
+
   setup(function()
-    spec_helper.prepare_db()
+    local api = assert(helpers.dao.apis:insert {
+      name         = "fixture-api",
+      uris         = "/html",
+      upstream_url = "http://httpbin.org"
+    })
+    assert(helpers.dao.plugins:insert {
+      name         = "hello-world-header",
+      api_id       = api.id
+    })
 
-    spec_helper.insert_fixtures {
-      api = {
-        {name = "fixture-api", request_path = "/status", upstream_url = "http://mockbin.com"}
-      },
-      plugin = {
-        {name = "hello-world-header", __api = 1},
-      }
-    }
+    -- start Kong with your testing Kong configuration (defined in "spec.helpers")
+    assert(helpers.start_kong({
+      custom_plugins = "hello-world-header"
+    }))
 
-    spec_helper.start_kong()
+    admin_client = helpers.admin_client()
   end)
 
   teardown(function()
-    spec_helper.stop_kong()
+    if admin_client then
+      admin_client:close()
+    end
+
+    helpers.stop_kong()
+  end)
+
+  before_each(function()
+    proxy_client = helpers.proxy_client()
+  end)
+
+  after_each(function()
+    if proxy_client then
+      proxy_client:close()
+    end
   end)
 
   describe("API responses", function()
-    local BASE_URL = spec_helper.PROXY_URL.."/status/200"
-
     it("should respond with the X-Hello-World header", function()
-      local response, status, headers = http_client.get(BASE_URL)
-      assert.is.equal(200, status)
-      assert.is.truthy(string.match(headers["x-hello-world"], "Today is .+"))
+      local res = assert(proxy_client:send {
+        method = "GET",
+        path   = "/html"
+      })
+
+      assert.res_status(200, res)
+      assert.is.truthy(res.headers["x-hello-world"])
+      assert.is.truthy(string.match(res.headers["x-hello-world"], "Today is .+"))
     end)
   end)
 end)

@@ -7,4 +7,4 @@ source .profile.local
 
 ./bin/install-luarocks
 
-kong migrations up -c config/kong_DEVELOPMENT.conf
+kong migrations up -c spec/kong_tests.conf

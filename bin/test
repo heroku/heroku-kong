@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -eu
+
+# Script to run the local development environment.
+
+source .profile.local
+eval "bin/busted $@"

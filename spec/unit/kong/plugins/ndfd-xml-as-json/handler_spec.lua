@@ -1,5 +1,3 @@
-require "kong.tools.ngx_stub"
-
 local handler = require "kong.plugins.ndfd-xml-as-json.handler"
 local json = require "cjson"
 local xml = require "xml"
@@ -54,8 +52,6 @@ describe("kong.plugins.ndfd-xml-as-json.handler", function()
     end)
 
     it("should reset content length", function()
-      ngx.header.content_length = 1
-
       local subject = handler()
       subject:header_filter()
 

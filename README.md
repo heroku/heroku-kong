@@ -263,14 +263,15 @@ curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
 
 #### Local Development
 
-To work with Kong locally on Mac OS X.
+To work with Kong locally on macOS X.
 
 ##### Requirements
 
+* [kong](https://getkong.org/install/osx/) for macOS via Homebrew
+* [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 * [Heroku](https://www.heroku.com/home)
   * [command-line tools (CLI)](https://toolbelt.heroku.com)
   * [a free account](https://signup.heroku.com)
-* [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
 ##### Clone
 
@@ -294,8 +295,8 @@ heroku info
     createuser --pwprompt kong
     # set the password "kong"
 
-    createdb --owner=kong heroku_kong_dev
-    createdb --owner=kong heroku_kong_test
+    createdb --owner=kong kong_dev
+    createdb --owner=kong kong_tests
     ```
 1. Execute `./bin/setup`
 
@@ -317,8 +318,8 @@ Any test-specific Lua rocks should be specified in `.luarocks_test` file, so tha
 Add tests in `spec/`:
 
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
-  * See also [Kong integration testing](https://getkong.org/docs/0.5.x/plugin-development/tests/)
+  * See docs [Kong plugin testing](https://getkong.org/docs/0.11.x/plugin-development/tests/)
 
 ```bash
-bin/busted
+bin/test
 ```
