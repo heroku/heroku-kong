@@ -1,15 +1,56 @@
 Kong Heroku app
 ===============
-Deploy [Kong community edition 0.11.0](http://blog.mashape.com/kong-ce-0-11-0-released/) clusters to Heroku Common Runtime and Private Spaces.
-
-Uses the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
+Deploy [Kong community edition 0.11.0](http://blog.mashape.com/kong-ce-0-11-0-released/) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
 🔬 This is a community proof-of-concept: [MIT license](LICENSE)
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+* [Purpose](#user-content-purpose)
+* [Usage](#user-content-usage)
+  * [Deploy](#user-content-deploy)
+  * [Connect local to Heroku app](#user-content-connect-local-to-heroku-app)
+  * [Admin console](#user-content-admin-console)
+  * [Proxy & protect the Admin API](#user-content-proxy-and-protect-the-admin-api)
+* [Customization](#user-content-customization)
+  * [Configuration](#user-content-configuration)
+  * [Kong plugins & additional Lua modules](#user-content-kong-plugins-additional-lua-modules)
+* [Demos](#user-content-demos)
+  * [API Rate Limiting](#user-content-demo-api-rate-limiting)
+  * [Custom plugin: hello-world-header](#user-content-demo-custom-plugin-hello-world-header)
+  * [Custom plugin: API translation, JSON→XML](#user-content-demo-custom-plugin-api-translation-json-xml)
+* [Development Notes](#user-content-dev-notes)
+  * [Learning the Language of Kong](#user-content-learning-the-language-of-kong)
+  * [Programming with Lua](#user-content-programming-with-lua)
+  * [Local Development](#user-content-local-development)
+    * [Requirements](#user-content-requirements)
+    * [Clone & connect](#user-content-clone-connect)
+    * [Setup](#user-content-setup)
+    * [Running](#user-content-running)
+    * [Testing](#user-content-testing)
+
+Purpose
+-------
+Kong is an extensible HTTP gateway/proxy application based on [OpenResty](http://openresty.org/en/), a web app framework built on the embedded [Lua language](http://www.lua.org) capabilities of the [Nginx web server](http://nginx.org/en/).
+
+With Heroku, Kong may be used for a variety of purposes. A few examples:
+
+  * implemenent unified authentication for a suite of apps
+  * enforce rate-limiting & request-size limits
+  * create a single management point for domains & hostnames of public APIs.
+
+👓 See: [main Kong site](https://getkong.org) for more about this powerful API gateway.
 
 Usage
 -----
+
+### Deploy
+
+Use the deploy button to create a Kong app in your Heroku account:
+
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+### Connect local to Heroku app
 
 To use Admin console on a freshly-deployed app, clone and connect this repo (or your own fork) to the Heroku app:
 
@@ -22,7 +63,7 @@ heroku git:remote --app $APP_NAME
 heroku info
 ```
 
-### Admin Console
+### Admin console
 
 Use Kong CLI and the Admin API in a [one-off dyno](https://devcenter.heroku.com/articles/one-off-dynos):
 
@@ -42,7 +83,7 @@ heroku run bash
 ~ $ kong health -p /app/.heroku
 ```
 
-### Protected Admin API
+### Proxy & protect the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network. For Kong on Heroku, the Admin API listens privately on `localhost:8001`.
 
 To make Kong Admin accessible from other locations, let's setup Kong itself to proxy its Admin API with key authentication, HTTPS-enforcement, and request rate & size limiting.
@@ -89,6 +130,9 @@ curl -H 'apikey: $ADMIN_KEY' https://$APP_NAME.herokuapp.com/kong-admin/status
 curl https://$APP_NAME.herokuapp.com/kong-admin/status?apikey=$ADMIN_KEY
 ```
 
+Customization
+-------------
+Kong may be customized through configuration and plugins.
 
 ### Configuration
 
@@ -193,7 +237,7 @@ curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 ```
 
 
-### Demo: API translation, JSON→XML
+### Demo: custom plugin: API translation, JSON→XML
 
 JSON/REST has taken over as the internet API lingua franca, shedding the complexity of XML/SOAP. The [National Digital Forecast Database [NDFD]](http://graphical.weather.gov/xml/) is a legacy XML/SOAP service.
 
@@ -242,16 +286,16 @@ curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
 👓 See the implementation of the custom plugin's [Lua source code](lib/kong/plugins/ndfd-xml-as-json), [unit tests](spec/unit/kong/plugins/ndfd-xml-as-json/handler_spec.lua), and [integration tests](spec/integration/kong/plugins/ndfd-xml-as-json_spec.lua).
 
 
-### Dev Notes
+## Dev notes
 
-#### Learning the Language of Kong
+### Learning the language of Kong
 
 * [Definitely an openresty guide](http://www.staticshin.com/programming/definitely-an-open-resty-guide/)
 * [An Introduction To OpenResty - Part 1](http://openmymind.net/An-Introduction-To-OpenResty-Nginx-Lua/), [2](http://openmymind.net/An-Introduction-To-OpenResty-Part-2/), & [3](http://openmymind.net/An-Introduction-To-OpenResty-Part-3/)
 * [Nginx API for Lua](https://github.com/openresty/lua-nginx-module#nginx-api-for-lua), `ngx` reference, for use in Kong plugins
   * [Nginx variables](http://nginx.org/en/docs/http/ngx_http_upstream_module.html#var_upstream_status), accessible through `ngx.var`
 
-#### Programming with Lua
+### Programming with Lua
 
 * [Lua 5.1](http://www.lua.org/manual/5.1/), Note: Kong is not compatible with the newest Lua version
 * [Classic Objects](https://github.com/rxi/classic), the basis of Kong's plugins
@@ -261,11 +305,11 @@ curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
 * [Serpent](http://notebook.kulchenko.com/programming/serpent-lua-serializer-pretty-printer), inspect values
 * [Busted](http://olivinelabs.com/busted/), testing framework
 
-#### Local Development
+### Local development
 
 To work with Kong locally on macOS X.
 
-##### Requirements
+#### Requirements
 
 * [kong](https://getkong.org/install/osx/) for macOS via Homebrew
 * [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
@@ -273,11 +317,12 @@ To work with Kong locally on macOS X.
   * [command-line tools (CLI)](https://toolbelt.heroku.com)
   * [a free account](https://signup.heroku.com)
 
-##### Clone
+#### Clone & connect
 
-Clone and connect this repo (or your own fork) to the Heroku app:
+If you haven't already, clone and connect your own fork of this repo to the Heroku app:
 
 ```bash
+# Replace the main repo with your own fork:
 git clone https://github.com/heroku/heroku-kong.git
 cd heroku-kong
 
@@ -288,7 +333,7 @@ heroku info
 
 ##### Setup
 
-1. [Install Kong using the .pkg](https://getkong.org/install/osx/)
+1. Ensure [requirements](#user-content-requirements) are met
 1. Create the Postgres user & databases:
     
     ```bash
