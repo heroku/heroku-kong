@@ -50,13 +50,6 @@ describe("kong.plugins.ndfd-xml-as-json.handler", function()
     it("is a function", function()
       assert.is.equal("function", type(handler.header_filter))
     end)
-
-    it("should reset content length", function()
-      local subject = handler()
-      subject:header_filter()
-
-      assert.is.equal(nil, ngx.header.content_length)
-    end)
   end)
 
   describe("#body_filter", function()
