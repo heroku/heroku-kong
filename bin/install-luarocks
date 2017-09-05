@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
-LUAROCKS_SPEC=.luarocks
-LUAROCKS_TEST_SPEC=.luarocks_test
+LUAROCKS_SPEC=Rockfile
+LUAROCKS_TEST_SPEC=Rockfile_test
 
 # Newline is the internal field separator
 IFS=$'\n'

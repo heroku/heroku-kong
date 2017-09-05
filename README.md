@@ -313,7 +313,7 @@ bin/start
 
 ##### Testing
 
-Any test-specific Lua rocks should be specified in `.luarocks_test` file, so that they are not installed when the app is deployed.
+Any test-specific Lua rocks should be specified in `Rockfile_test` file, so that they are not installed when the app is deployed.
 
 Add tests in `spec/`:
 
