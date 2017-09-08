@@ -358,12 +358,13 @@ bin/start
 
 ##### Testing
 
-Any test-specific Lua rocks should be specified in `.luarocks_test` file, so that they are not installed when the app is deployed.
+Any test-specific Lua rocks should be specified in `Rockfile_test` file, so that they are not installed when the app is deployed.
 
 Add tests in `spec/`:
 
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
-  * See docs [Kong plugin testing](https://getkong.org/docs/0.11.x/plugin-development/tests/)
+  * [Kong plugin testing guide](https://getkong.org/docs/0.11.x/plugin-development/tests/)
+  * [buildpack requirements for testing](https://github.com/heroku/heroku-buildpack-kong/blob/master/README.markdown#user-content-testing)
 
 ```bash
 bin/test
