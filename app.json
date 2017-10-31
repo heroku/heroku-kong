@@ -11,9 +11,9 @@
   ],
   "website": "https://getkong.org/",
   "repository": "https://github.com/heroku/heroku-kong.git",
-  "success_url": "https://github.com/heroku/heroku-kong#user-content-usage",
+  "success_url": "https://github.com/heroku/heroku-kong/blob/master/README.md#user-content-usage",
   "buildpacks": [{
-    "url": "https://github.com/heroku/heroku-buildpack-kong.git#testpack-api"
+    "url": "https://github.com/heroku/heroku-buildpack-kong.git"
   }],
   "addons": [
     "heroku-postgresql"
