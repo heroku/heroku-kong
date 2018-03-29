@@ -125,7 +125,7 @@ Now, access Kong's Admin API via the protected, public-facing proxy:
 
 ```bash
 # Set the request header:
-curl -H 'apikey: $ADMIN_KEY' https://$APP_NAME.herokuapp.com/kong-admin/status
+curl -H "apikey: $ADMIN_KEY" https://$APP_NAME.herokuapp.com/kong-admin/status
 # or use query params:
 curl https://$APP_NAME.herokuapp.com/kong-admin/status?apikey=$ADMIN_KEY
 ```
