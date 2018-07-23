@@ -58,7 +58,7 @@ admin_error_log = /dev/stderr             # Path for Admin API request error
                                           # adjusted by the `log_level`
                                           # directive.
 
-custom_plugins = hello-world-header,ndfd-xml-as-json
+plugins = hello-world-header,ndfd-xml-as-json
                                  # Comma-separated list of additional plugins
                                  # this node should load.
                                  # Use this property to load custom plugins

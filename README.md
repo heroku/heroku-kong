@@ -1,6 +1,6 @@
 Kong Heroku app
 ===============
-Deploy [Kong 0.11 Community Edition](https://konghq.com/kong-community-edition/) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
+Deploy [Kong 0.14 Community Edition](https://konghq.com/kong-community-edition/) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
 🔬 This is a community proof-of-concept: [MIT license](LICENSE)
 
@@ -91,24 +91,32 @@ To make Kong Admin accessible from other locations, let's setup Kong itself to p
 From the [admin console](#user-content-admin-console):
 ```bash
 # Create the authenticated `/kong-admin` API, targeting the localhost port:
-curl http://localhost:8001/apis -i -X POST \
-  --data name=kong-admin \
-  --data uris=/kong-admin \
-  --data upstream_url=http://localhost:8001 \
-  --data https_only=true \
-  --data http_if_terminated=true
-curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+curl http://localhost:8001/services/ -i -X POST \
+  --data 'name=kong-admin' \
+  --data 'protocol=http' \
+  --data 'port=8001' \
+  --data 'host=localhost'
+# Note the Service ID returned in previous response, use it in place of `$SERVICE_ID`.
+curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
-  --data "config.allowed_payload_size=8"
-curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data "config.allowed_payload_size=8" \
+  --data 'service_id=$SERVICE_ID'
+curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=rate-limiting' \
-  --data "config.second=5"
-curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data "config.minute=5" \
+  --data 'service_id=$SERVICE_ID'
+curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=key-auth' \
-  --data "config.hide_credentials=true"
-curl http://localhost:8001/apis/kong-admin/plugins/ -i -X POST \
+  --data "config.hide_credentials=true" \
+  --data 'service_id=$SERVICE_ID'
+curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=acl' \
-  --data "config.whitelist=kong-admin"
+  --data "config.whitelist=kong-admin" \
+  --data 'service_id=$SERVICE_ID'
+curl http://localhost:8001/routes/ -i -X POST \
+  --data 'paths[]=/kong-admin' \
+  --data 'protocols[]=https' \
+  --data 'service=$SERVICE_ID'
 
 # Create a consumer with username and authentication credentials:
 curl http://localhost:8001/consumers/ -i -X POST \
@@ -146,7 +154,7 @@ Kong is automatically configured at runtime with a `.profile.d` script:
 
 All file-based config may be overridden by setting `KONG_`-prefixed config vars, e.g. `heroku config:set KONG_LOG_LEVEL=debug`
 
-👓 See: [Kong 0.11 Configuration Reference](https://getkong.org/docs/0.11.x/configuration/)
+👓 See: [Kong 0.14 Configuration Reference](https://docs.konghq.com/0.14.x/configuration/)
 
 
 ### Kong plugins & additional Lua modules
@@ -181,29 +189,37 @@ curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 Here's the whole configuration for this API rate limiter:
 
 ```bash
-curl http://localhost:8001/apis/ -i -X POST \
+curl http://localhost:8001/services/ -i -X POST \
   --data 'name=bay-lights' \
-  --data 'uris=/bay-lights' \
-  --data 'upstream_url=https://bay-lights-api-production.herokuapp.com/'
-curl http://localhost:8001/apis/bay-lights/plugins/ -i -X POST \
+  --data 'protocol=https' \
+  --data 'port=443' \
+  --data 'host=bay-lights-api-production.herokuapp.com'
+# Note the Service ID returned in previous response, use it in place of `$SERVICE_ID`.
+curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
-  --data "config.allowed_payload_size=8"
-curl http://localhost:8001/apis/bay-lights/plugins/ -i -X POST \
+  --data "config.allowed_payload_size=8" \
+  --data 'service_id=$SERVICE_ID'
+curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=rate-limiting' \
-  --data "config.minute=5"
+  --data "config.minute=5" \
+  --data 'service_id=$SERVICE_ID'
+curl http://localhost:8001/routes/ -i -X POST \
+  --data 'paths[]=/bay-lights' \
+  --data 'service=$SERVICE_ID'
 ```
 
 ### Demo: custom plugin: hello-world-header
 
-[Custom plugins](https://getkong.org/docs/0.11.x/plugin-development/) allow you to observe and transform HTTP traffic using lightweight, high-performance [Lua](http://www.lua.org) code in Nginx [request processing contexts](https://getkong.org/docs/0.11.x/plugin-development/custom-logic/#available-request-contexts). Building on the [previous example](#user-content-demo-api-rate-limiting), let's add a simple plugin to Kong.
+[Custom plugins](https://docs.konghq.com/0.14.x/plugin-development/) allow you to observe and transform HTTP traffic using lightweight, high-performance [Lua](http://www.lua.org) code in Nginx [request processing contexts](https://docs.konghq.com/0.14.x/plugin-development/custom-logic/#available-request-contexts). Building on the [previous example](#user-content-demo-api-rate-limiting), let's add a simple plugin to Kong.
 
 [hello-world-header](lib/kong/plugins/hello-world-header/handler.lua) will add an HTTP response header **X-Hello-World** showing the date and a message from an environment variable.
 
 Activate this plugin for the API:
 
 ```bash
-curl http://localhost:8001/apis/bay-lights/plugins/ -i -X POST \
-  --data 'name=hello-world-header'
+curl http://localhost:8001/plugins/ -i -X POST \
+  --data 'name=hello-world-header' \
+  --data 'service_id=$SERVICE_ID'
 ```
 
 Then, set a message through the Heroku config var:
@@ -230,7 +246,7 @@ curl --head https://kong-proxy-public.herokuapp.com/bay-lights/lights
 # X-Content-Type-Options: nosniff
 # Vary: Accept-Encoding
 # Request-Id: 6c815aae-a5e9-496f-b731-dc72bbe2b63e
-# Via: kong/0.11.0, 1.1 vegur
+# Via: kong/0.14.0, 1.1 vegur
 # X-Hello-World: Today is 2017-08-28. 🌈🙈  <--- The injected header
 # X-Kong-Upstream-Latency: 49
 # X-Kong-Proxy-Latency: 161
@@ -269,18 +285,27 @@ This technique may be used to create a suite of cohesive JSON APIs out of variou
 Here's the configuration for this API translator:
 
 ```bash
-curl http://localhost:8001/apis -i -X POST \
+curl http://localhost:8001/services/ -i -X POST \
   --data 'name=ndfd-max-temps' \
-  --data 'upstream_url=https://graphical.weather.gov/xml/SOAP_server/ndfdXMLserver.php' \
-  --data 'uris=/ndfd-max-temps'
-curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
+  --data 'protocol=https' \
+  --data 'port=443' \
+  --data 'host=graphical.weather.gov' \
+  --data 'path=/xml/SOAP_server/ndfdXMLserver.php'
+# Note the Service ID returned in previous response, use it in place of `$SERVICE_ID`.
+curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
-  --data "config.allowed_payload_size=8"
-curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
+  --data "config.allowed_payload_size=8" \
+  --data 'service_id=$SERVICE_ID'
+curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=rate-limiting' \
-  --data 'config.minute=5'
-curl http://localhost:8001/apis/ndfd-max-temps/plugins/ -i -X POST \
-  --data 'name=ndfd-xml-as-json'
+  --data "config.minute=5" \
+  --data 'service_id=$SERVICE_ID'
+curl http://localhost:8001/plugins/ -i -X POST \
+  --data 'name=ndfd-xml-as-json' \
+  --data 'service_id=$SERVICE_ID'
+curl http://localhost:8001/routes/ -i -X POST \
+  --data 'paths[]=/ndfd-max-temps' \
+  --data 'service=$SERVICE_ID'
 ```
 
 👓 See the implementation of the custom plugin's [Lua source code](lib/kong/plugins/ndfd-xml-as-json), [unit tests](spec/unit/kong/plugins/ndfd-xml-as-json/handler_spec.lua), and [integration tests](spec/integration/kong/plugins/ndfd-xml-as-json_spec.lua).
@@ -316,6 +341,13 @@ To work with Kong locally on macOS X.
 * [Heroku](https://www.heroku.com/home)
   * [command-line tools (CLI)](https://toolbelt.heroku.com)
   * [a free account](https://signup.heroku.com)
+* [Lua](https://www.lua.org/versions.html) 5.1
+* [LuaRocks](https://github.com/luarocks/luarocks) 2.4.4
+* [OpenResty](https://openresty.org/en/installation.html) 1.13.6.2
+  * [Install from source](https://docs.konghq.com/install/source/)
+  * `./configure -j2 --with-openssl=~/Downloads/openssl-1.0.2o --with-ipv6 --with-http_realip_module --with-http_stub_status_module`
+* [Kong](https://github.com/Kong/kong) 0.14.0
+  * `luarocks install kong 0.14.0 OPENSSL_DIR=/usr/local/opt/openssl CRYPTO_DIR=/usr/local/opt/openssl`
 
 #### Clone & connect
 
@@ -363,7 +395,7 @@ Any test-specific Lua rocks should be specified in `Rockfile_test` file, so that
 Add tests in `spec/`:
 
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
-  * [Kong plugin testing guide](https://getkong.org/docs/0.11.x/plugin-development/tests/)
+  * [Kong plugin testing guide](https://docs.konghq.com/0.14.x/plugin-development/tests/)
   * [buildpack requirements for testing](https://github.com/heroku/heroku-buildpack-kong/blob/master/README.markdown#user-content-testing)
 
 ```bash
