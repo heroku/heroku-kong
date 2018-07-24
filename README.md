@@ -336,18 +336,21 @@ To work with Kong locally on macOS X.
 
 #### Requirements
 
-* [kong](https://getkong.org/install/osx/) for macOS via Homebrew
 * [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 * [Heroku](https://www.heroku.com/home)
   * [command-line tools (CLI)](https://toolbelt.heroku.com)
   * [a free account](https://signup.heroku.com)
-* [Lua](https://www.lua.org/versions.html) 5.1
-* [LuaRocks](https://github.com/luarocks/luarocks) 2.4.4
-* [OpenResty](https://openresty.org/en/installation.html) 1.13.6.2
-  * [Install from source](https://docs.konghq.com/install/source/)
-  * `./configure -j2 --with-openssl=~/Downloads/openssl-1.0.2o --with-ipv6 --with-http_realip_module --with-http_stub_status_module`
-* [Kong](https://github.com/Kong/kong) 0.14.0
-  * `luarocks install kong 0.14.0 OPENSSL_DIR=/usr/local/opt/openssl CRYPTO_DIR=/usr/local/opt/openssl`
+* Kong & its dependencies
+  * as a single package install
+    * [Kong](https://getkong.org/install/osx/) for macOS via Homebrew
+  * or, from source
+    * [Lua](https://www.lua.org/versions.html) 5.1
+    * [LuaRocks](https://github.com/luarocks/luarocks) 2.4.4
+    * [OpenResty](https://openresty.org/en/installation.html) 1.13.6.2
+      * [Install from source](https://docs.konghq.com/install/source/)
+      * `./configure -j2 --with-openssl=~/Downloads/openssl-1.0.2o --with-ipv6 --with-http_realip_module --with-http_stub_status_module`
+    * [Kong](https://github.com/Kong/kong) 0.14.0
+      * `luarocks install kong 0.14.0 OPENSSL_DIR=/usr/local/opt/openssl CRYPTO_DIR=/usr/local/opt/openssl`
 
 #### Clone & connect
 
