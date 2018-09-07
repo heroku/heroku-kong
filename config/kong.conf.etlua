@@ -34,7 +34,7 @@ log_level = info                 # Log level of the Nginx server. Logs are
 # Note: See http://nginx.org/en/docs/ngx_core_module.html#error_log for a list
 # of accepted values.
 
-proxy_access_log = off                    # Path for proxy port request access
+proxy_access_log = /dev/stderr            # Path for proxy port request access
                                           # logs. Set this value to `off` to
                                           # disable logging proxy requests.
                                           # If this value is a relative path, it
@@ -46,7 +46,7 @@ proxy_error_log = /dev/stderr             # Path for proxy port request error
                                           # adjusted by the `log_level`
                                           # directive.
 
-admin_access_log = off                    # Path for Admin API request access
+admin_access_log = /dev/stderr            # Path for Admin API request access
                                           # logs. Set this value to `off` to
                                           # disable logging Admin API requests.
                                           # If this value is a relative path, it
@@ -217,7 +217,8 @@ admin_ssl = off                  # Determines if Nginx should be listening for
                                  # and "X-Kong-Upstream-Latency" response
                                  # header fields.
 
-trusted_ips = 10.0.0.0/8         # Defines trusted IP addresses blocks that are
+trusted_ips = 10.0.0.0/8,172.16.0.0/12
+                                 # Defines trusted IP addresses blocks that are
                                  # known to send correct X-Forwarded-* headers.
                                  # Requests from trusted IPs make Kong forward
                                  # their X-Forwarded-* headers upstream.
