@@ -100,23 +100,23 @@ curl http://localhost:8001/services/ -i -X POST \
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
   --data "config.allowed_payload_size=8" \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=rate-limiting' \
   --data "config.minute=5" \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=key-auth' \
   --data "config.hide_credentials=true" \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=acl' \
   --data "config.whitelist=kong-admin" \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 curl http://localhost:8001/routes/ -i -X POST \
   --data 'paths[]=/kong-admin' \
   --data 'protocols[]=https' \
-  --data 'service=$SERVICE_ID'
+  --data "service.id=$SERVICE_ID"
 
 # Create a consumer with username and authentication credentials:
 curl http://localhost:8001/consumers/ -i -X POST \
@@ -198,14 +198,14 @@ curl http://localhost:8001/services/ -i -X POST \
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
   --data "config.allowed_payload_size=8" \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=rate-limiting' \
   --data "config.minute=5" \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 curl http://localhost:8001/routes/ -i -X POST \
   --data 'paths[]=/bay-lights' \
-  --data 'service=$SERVICE_ID'
+  --data "service.id=$SERVICE_ID"
 ```
 
 ### Demo: custom plugin: hello-world-header
@@ -219,7 +219,7 @@ Activate this plugin for the API:
 ```bash
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=hello-world-header' \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 ```
 
 Then, set a message through the Heroku config var:
@@ -295,17 +295,17 @@ curl http://localhost:8001/services/ -i -X POST \
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
   --data "config.allowed_payload_size=8" \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=rate-limiting' \
   --data "config.minute=5" \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=ndfd-xml-as-json' \
-  --data 'service_id=$SERVICE_ID'
+  --data "service_id=$SERVICE_ID"
 curl http://localhost:8001/routes/ -i -X POST \
   --data 'paths[]=/ndfd-max-temps' \
-  --data 'service=$SERVICE_ID'
+  --data "service.id=$SERVICE_ID"
 ```
 
 👓 See the implementation of the custom plugin's [Lua source code](lib/kong/plugins/ndfd-xml-as-json), [unit tests](spec/unit/kong/plugins/ndfd-xml-as-json/handler_spec.lua), and [integration tests](spec/integration/kong/plugins/ndfd-xml-as-json_spec.lua).
