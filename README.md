@@ -2,7 +2,9 @@ Kong Heroku app
 ===============
 Deploy [Kong 0.14 Community Edition](https://konghq.com/kong-community-edition/) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
-🔬 This is a community proof-of-concept: [MIT license](LICENSE)
+⏫ **Upgrading from an earlier version?** See [Upgrade Guide](#user-content-upgrade-guide).
+
+🔬 This is a community proof-of-concept, [MIT license](LICENSE), provided "as is", without warranty of any kind.
 
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
@@ -12,6 +14,7 @@ Deploy [Kong 0.14 Community Edition](https://konghq.com/kong-community-edition/)
   * [Connect local to Heroku app](#user-content-connect-local-to-heroku-app)
   * [Admin console](#user-content-admin-console)
   * [Proxy & protect the Admin API](#user-content-proxy--protect-the-admin-api)
+  * [Upgrade guide](#user-content-upgrade-guide)
 * [Customization](#user-content-customization)
   * [Configuration](#user-content-configuration)
   * [Kong plugins & additional Lua modules](#user-content-kong-plugins--additional-lua-modules)
@@ -137,6 +140,22 @@ curl -H "apikey: $ADMIN_KEY" https://$APP_NAME.herokuapp.com/kong-admin/status
 # or use query params:
 curl https://$APP_NAME.herokuapp.com/kong-admin/status?apikey=$ADMIN_KEY
 ```
+
+### Upgrade guide
+
+First, see [Kong's official upgrade path](https://github.com/Kong/kong/blob/master/UPGRADE.md).
+
+Then, take into account these facts about how this Kong on Heroku app works:
+
+* this app automatically runs `kong migrations up` for every deployment
+* you may prevent the previous version of Kong from attempting to use the new database schema during the upgrade (this will cause downtime):
+   1. check the current formation size with `heroku ps`
+   1. scale the web workers down `heroku ps:scale web=0`
+   1. [perform the upgrade](https://github.com/Kong/kong/blob/master/UPGRADE.md)
+   1. allow release process to run
+   1. finally restart to the original formation size `heroku ps:scale web=$PREVIOUS_SIZE`
+
+🏥 Please [open an issue](https://github.com/heroku/heroku-kong/issues), if you encounter problems or have feedback about this process.
 
 Customization
 -------------
