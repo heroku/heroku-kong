@@ -13,7 +13,7 @@
   "repository": "https://github.com/heroku/heroku-kong.git",
   "success_url": "https://github.com/heroku/heroku-kong/blob/master/README.md#user-content-usage",
   "buildpacks": [{
-    "url": "https://github.com/heroku/heroku-buildpack-kong.git"
+    "url": "https://github.com/heroku/heroku-buildpack-kong.git#kong-0.14.0"
   }],
   "addons": [
     "heroku-postgresql"

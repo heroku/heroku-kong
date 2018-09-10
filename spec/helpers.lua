@@ -1,24 +1,36 @@
 ------------------------------------------------------------------
 -- Collection of utilities to help testing Kong features and plugins.
 --
--- @copyright Copyright 2016-2017 Mashape Inc. All rights reserved.
+-- @copyright Copyright 2016-2018 Kong Inc. All rights reserved.
 -- @license [Apache 2.0](https://opensource.org/licenses/Apache-2.0)
 -- @module spec.helpers
 
 local BIN_PATH = "bin/kong"
 local TEST_CONF_PATH = "spec/kong_tests.conf"
 local CUSTOM_PLUGIN_PATH = "./spec/fixtures/custom_plugins/?.lua"
+local MOCK_UPSTREAM_PROTOCOL = "http"
+local MOCK_UPSTREAM_SSL_PROTOCOL = "https"
+local MOCK_UPSTREAM_HOST = "127.0.0.1"
+local MOCK_UPSTREAM_HOSTNAME = "localhost"
+local MOCK_UPSTREAM_PORT = 15555
+local MOCK_UPSTREAM_SSL_PORT = 15556
 
 local conf_loader = require "kong.conf_loader"
 local DAOFactory = require "kong.dao.factory"
+local Blueprints = require "spec.fixtures.blueprints"
 local pl_stringx = require "pl.stringx"
 local pl_utils = require "pl.utils"
 local pl_path = require "pl.path"
 local pl_file = require "pl.file"
 local pl_dir = require "pl.dir"
 local cjson = require "cjson.safe"
+local utils = require "kong.tools.utils"
 local http = require "resty.http"
+local nginx_signals = require "kong.cmd.utils.nginx_signals"
 local log = require "kong.cmd.utils.log"
+local DB = require "kong.db"
+
+local table_merge = utils.table_merge
 
 log.set_lvl(log.levels.quiet) -- disable stdout logs in tests
 
@@ -30,12 +42,13 @@ package.path = CUSTOM_PLUGIN_PATH .. ";" .. package.path
 -- a numerical representation of it.
 -- Ex: 1.11.2.2 -> 11122
 local function openresty_ver_num()
-  local ok, _, _, stderr = pl_utils.executeex("nginx -V")
-  if not ok then
+  local nginx_bin = assert(nginx_signals.find_nginx_bin())
+  local _, _, _, stderr = pl_utils.executeex(string.format("%s -V", nginx_bin))
+
+  local a, b, c, d = string.match(stderr or "", "openresty/(%d+)%.(%d+)%.(%d+)%.(%d+)")
+  if not a then
     error("could not execute 'nginx -V': " .. stderr)
   end
-
-  local a, b, c, d = string.match(stderr, "openresty/(%d+)%.(%d+)%.(%d+)%.(%d+)")
 
   return tonumber(a .. b .. c .. d)
 end
@@ -50,7 +63,7 @@ end
 --   ]]
 --
 -- will return: "hello world\nfoo bar"
-local function unindent(str, concat_newlines)
+local function unindent(str, concat_newlines, spaced_newlines)
   str = string.match(str, "^%s*(%S.-%S*)%s*$")
   if not str then
     return ""
@@ -70,6 +83,7 @@ local function unindent(str, concat_newlines)
   end
 
   local repl = concat_newlines and "" or "\n"
+  repl = spaced_newlines and " " or repl
 
   return (str:gsub("\n" .. prefix, repl):gsub("\n$", "")):gsub("\\r", "\r")
 end
@@ -78,15 +92,69 @@ end
 -- Conf and DAO
 ---------------
 local conf = assert(conf_loader(TEST_CONF_PATH))
-local dao = assert(DAOFactory.new(conf))
+local db = assert(DB.new(conf))
+local dao = assert(DAOFactory.new(conf, db))
+db.old_dao = dao
+local blueprints = assert(Blueprints.new(dao, db))
 -- make sure migrations are up-to-date
 
-local function run_migrations(given_dao)
-  -- either use the dao provided to this call, or use
-  -- the helper dao
-  local d = given_dao or dao
+local each_strategy
 
-  assert(d:run_migrations())
+do
+    local default_strategies = { "postgres", "cassandra" }
+
+    local function iter(strategies, i)
+      i = i + 1
+      local strategy = strategies[i]
+      if strategy then
+        return i, strategy
+      end
+    end
+
+    each_strategy = function(...)
+      local args = { ... }
+      local strategies = default_strategies
+      if #args > 0 then
+        strategies = args
+      end
+
+      return iter, strategies, 0
+    end
+end
+
+local function get_db_utils(strategy, no_truncate)
+  strategy = strategy or conf.database
+
+  -- new DAO (DB module)
+  local db = assert(DB.new(conf, strategy))
+  assert(db:init_connector())
+
+  -- legacy DAO
+  local dao
+
+  do
+    local database = conf.database
+    conf.database = strategy
+    dao = assert(DAOFactory.new(conf, db))
+    conf.database = database
+
+    assert(dao:run_migrations())
+    if not no_truncate then
+      dao:truncate_tables()
+    end
+  end
+
+  -- cleanup new DB tables
+  if not no_truncate then
+    assert(db:truncate())
+  end
+
+  db.old_dao = dao
+
+  -- blueprints
+  local bp = assert(Blueprints.new(dao, db))
+
+  return bp, db, dao
 end
 
 -----------------
@@ -146,14 +214,16 @@ local function wait_until(f, timeout)
     error("arg #1 must be a function", 2)
   end
 
+  ngx.update_time()
+
   timeout = timeout or 2
   local tstart = ngx.time()
   local texp = tstart + timeout
   local ok, res, err
 
   repeat
-    ngx.sleep(0.2)
     ok, res, err = pcall(f)
+    ngx.sleep(0.05)
   until not ok or res or ngx.time() >= texp
 
   if not ok then
@@ -196,7 +266,7 @@ function resty_http_proxy_mt:send(opts)
   if string.find(content_type, "application/json") and t_body_table then
     opts.body = cjson.encode(opts.body)
   elseif string.find(content_type, "www-form-urlencoded", nil, true) and t_body_table then
-    opts.body = utils.encode_args(opts.body, true) -- true: not % encoded
+    opts.body = utils.encode_args(opts.body, true, opts.no_array_indexes)
   elseif string.find(content_type, "multipart/form-data", nil, true) and t_body_table then
     local form = opts.body
     local boundary = "8fd84e9444e3946c"
@@ -245,6 +315,16 @@ function resty_http_proxy_mt:send(opts)
   return res, err
 end
 
+-- Implements http_client:get("path", [options]), as well as post, put, etc.
+-- These methods are equivalent to calling http_client:send, but are shorter
+-- They also come with a built-in assert
+for method_name in ("get post put patch delete"):gmatch("%w+") do
+  resty_http_proxy_mt[method_name] = function(self, path, options)
+    local full_options = table_merge({ method = method_name:upper(), path = path}, options or {})
+    return assert(self:send(full_options))
+  end
+end
+
 function resty_http_proxy_mt:__index(k)
   local f = rawget(resty_http_proxy_mt, k)
   if f then
@@ -272,24 +352,78 @@ local function http_client(host, port, timeout)
   }, resty_http_proxy_mt)
 end
 
+--- Returns the proxy port.
+-- @param ssl (boolean) if `true` returns the ssl port
+local function get_proxy_port(ssl)
+  if ssl == nil then ssl = false end
+  for _, entry in ipairs(conf.proxy_listeners) do
+    if entry.ssl == ssl then
+      return entry.port
+    end
+  end
+  error("No proxy port found for ssl=" .. tostring(ssl), 2)
+end
+
+--- Returns the proxy ip.
+-- @param ssl (boolean) if `true` returns the ssl ip address
+local function get_proxy_ip(ssl)
+  if ssl == nil then ssl = false end
+  for _, entry in ipairs(conf.proxy_listeners) do
+    if entry.ssl == ssl then
+      return entry.ip
+    end
+  end
+  error("No proxy ip found for ssl=" .. tostring(ssl), 2)
+end
+
 --- returns a pre-configured `http_client` for the Kong proxy port.
 -- @name proxy_client
 local function proxy_client(timeout)
-  return http_client(conf.proxy_ip, conf.proxy_port, timeout)
+  local proxy_ip = get_proxy_ip(false)
+  local proxy_port = get_proxy_port(false)
+  assert(proxy_ip, "No http-proxy found in the configuration")
+  return http_client(proxy_ip, proxy_port, timeout)
 end
 
 --- returns a pre-configured `http_client` for the Kong SSL proxy port.
 -- @name proxy_ssl_client
 local function proxy_ssl_client(timeout)
-  local client = http_client(conf.proxy_ip, conf.proxy_ssl_port, timeout)
+  local proxy_ip = get_proxy_ip(true)
+  local proxy_port = get_proxy_port(true)
+  assert(proxy_ip, "No https-proxy found in the configuration")
+  local client = http_client(proxy_ip, proxy_port, timeout)
   assert(client:ssl_handshake())
   return client
 end
 
 --- returns a pre-configured `http_client` for the Kong admin port.
 -- @name admin_client
-local function admin_client(timeout)
-  return http_client(conf.admin_ip, conf.admin_port, timeout)
+local function admin_client(timeout, forced_port)
+  local admin_ip, admin_port
+  for _, entry in ipairs(conf.admin_listeners) do
+    if entry.ssl == false then
+      admin_ip = entry.ip
+      admin_port = entry.port
+    end
+  end
+  assert(admin_ip, "No http-admin found in the configuration")
+  return http_client(admin_ip, forced_port or admin_port, timeout)
+end
+
+--- returns a pre-configured `http_client` for the Kong admin SSL port.
+-- @name admin_ssl_client
+local function admin_ssl_client(timeout)
+  local admin_ip, admin_port
+  for _, entry in ipairs(conf.proxy_listeners) do
+    if entry.ssl == true then
+      admin_ip = entry.ip
+      admin_port = entry.port
+    end
+  end
+  assert(admin_ip, "No https-admin found in the configuration")
+  local client = http_client(admin_ip, admin_port, timeout)
+  assert(client:ssl_handshake())
+  return client
 end
 
 ---
@@ -302,25 +436,41 @@ end
 -- (single read).
 -- @name tcp_server
 -- @param `port`    The port where the server will be listening to
+-- @param `opts     A table of options defining the server's behavior
 -- @return `thread` A thread object
-local function tcp_server(port, ...)
+local function tcp_server(port, opts, ...)
   local threads = require "llthreads2.ex"
+  opts = opts or {}
   local thread = threads.new({
-    function(port)
+    function(port, opts)
       local socket = require "socket"
       local server = assert(socket.tcp())
-      server:settimeout(10)
+      server:settimeout(360)
       assert(server:setoption('reuseaddr', true))
       assert(server:bind("*", port))
       assert(server:listen())
       local client = assert(server:accept())
+
+      if opts.tls then
+        local ssl = require "ssl"
+        local params = {
+          mode = "server",
+          protocol = "any",
+          key = "spec/fixtures/kong_spec.key",
+          certificate = "spec/fixtures/kong_spec.crt",
+        }
+
+        client = ssl.wrap(client, params)
+        client:dohandshake()
+      end
+
       local line = assert(client:receive())
       client:send(line .. "\n")
       client:close()
       server:close()
       return line
     end
-  }, port)
+  }, port, opts)
 
   return thread:start(...)
 end
@@ -378,26 +528,57 @@ end
 -- Accepts a single connection, reading once and then closes
 -- @name udp_server
 -- @param `port`    The port where the server will be listening to
+-- @param `n`       The number of packets that will be received
+-- @param `timeout` Timeout per read
 -- @return `thread` A thread object
-local function udp_server(port)
+local function udp_server(port, n, timeout)
   local threads = require "llthreads2.ex"
 
   local thread = threads.new({
-    function(port)
+    function(port, n, timeout)
       local socket = require "socket"
       local server = assert(socket.udp())
-      server:settimeout(5)
+      server:settimeout(timeout or 360)
       server:setoption("reuseaddr", true)
       server:setsockname("127.0.0.1", port)
-      local data, err = server:receive()
+      local err
+      local data = {}
+      local handshake_done = false
+      local i = 0
+      while i < n do
+        local pkt, rport
+        pkt, err, rport = server:receivefrom()
+        if not pkt then
+          break
+        end
+        if pkt == "KONG_UDP_HELLO" then
+          if not handshake_done then
+            handshake_done = true
+            server:sendto("KONG_UDP_READY", "127.0.0.1", rport)
+          end
+        else
+          i = i + 1
+          data[i] = pkt
+        end
+      end
       server:close()
-      return data, err
+      return (n > 1 and data or data[1]), err
     end
-  }, port or 9999)
-
+  }, port or MOCK_UPSTREAM_PORT, n or 1, timeout)
   thread:start()
 
-  ngx.sleep(0.1)
+  local socket = require "socket"
+  local handshake = socket.udp()
+  handshake:settimeout(0.01)
+  handshake:setsockname("127.0.0.1", 0)
+  while true do
+    handshake:sendto("KONG_UDP_HELLO", "127.0.0.1", port)
+    local data = handshake:receive()
+    if data == "KONG_UDP_READY" then
+      break
+    end
+  end
+  handshake:close()
 
   return thread
 end
@@ -437,7 +618,7 @@ luassert:register("modifier", "response", modifier_response)
 --- Generic modifier "request".
 -- Will set a "request" value in the assertion state, so following
 -- assertions will operate on the value set.
--- The request must be inside a 'response' from mockbin.org or httpbin.org
+-- The request must be inside a 'response' from mock_upstream
 -- @name request
 -- @param response results from `http_client:send` function. The request will
 -- be extracted from the response.
@@ -447,28 +628,27 @@ luassert:register("modifier", "response", modifier_response)
 local function modifier_request(state, arguments, level)
   local generic = "The assertion 'request' modifier takes a http response"
                 .. " object as input to decode the json-body returned by"
-                .. " httpbin.org/mockbin.org, to retrieve the proxied request."
+                .. " mock_upstream, to retrieve the proxied request."
 
   local res = arguments[1]
 
   assert(type(res) == "table" and type(res.read_body) == "function",
          "Expected a http response object, got '" .. tostring(res) .. "'. " .. generic)
 
-  local body, err
+  local body, request, err
   body = assert(res:read_body())
-  body, err = cjson.decode(body)
+  request, err = cjson.decode(body)
 
-  assert(body, "Expected the http response object to have a json encoded body,"
-             .. " but decoding gave error '" .. tostring(err) .. "'. " .. generic)
+  assert(request, "Expected the http response object to have a json encoded body,"
+                  .. " but decoding gave error '" .. tostring(err) .. "'. Obtained body: "
+                  .. body .. "\n." .. generic)
 
-  -- check if it is a mockbin request
-  if lookup((res.headers or {}),"X-Powered-By") ~= "mockbin" then
-    -- not mockbin, so httpbin?
-    assert(type(body.url) == "string" and body.url:find("//httpbin.org", 1, true),
-           "Could not determine the response to be from either mockbin.com or httpbin.org")
+
+  if lookup((res.headers or {}),"X-Powered-By") ~= "mock_upstream" then
+    error("Could not determine the response to be from mock_upstream")
   end
 
-  rawset(state, "kong_request", body)
+  rawset(state, "kong_request", request)
   rawset(state, "kong_response", nil)
 
   return state
@@ -622,8 +802,7 @@ luassert:register("assertion", "res_status", res_status,
 
 --- Checks and returns a json body of an http response/request. Only checks
 -- validity of the json, does not check appropriate headers. Setting the target
--- to check can be done through `request` or `response` (requests are only
--- supported with mockbin.com).
+-- to check can be done through `request` or `response`
 -- @name jsonbody
 -- @return the decoded json as a table
 -- @usage
@@ -643,15 +822,19 @@ local function jsonbody(state, args)
       return false
     end
     return true, {json}
+
   else
-    assert(rawget(state, "kong_request").postData, "No post data found in the request. Only mockbin.com is supported!")
-    local json, err = cjson.decode(rawget(state, "kong_request").postData.text)
-    if not json then
-      table.insert(args, 1, "Error decoding: " .. tostring(err) .. "\nRequest body:" .. rawget(state, "kong_request").postData.text)
-      args.n = 1
-      return false
+    local r = rawget(state, "kong_request")
+    if r.post_data
+    and (r.post_data.kind == "json" or r.post_data.kind == "json (error)")
+    and r.post_data.params
+    then
+      local pd = r.post_data
+      return true, { { params = pd.params, data = pd.text, error = pd.error, kind = pd.kind } }
+
+    else
+      error("No json data found in the request")
     end
-    return true, {json}
   end
 end
 say:set("assertion.jsonbody.negative", [[
@@ -704,7 +887,7 @@ luassert:register("assertion", "header", res_header,
                   "assertion.res_header.positive")
 
 ---
--- An assertion to look for a query parameter in a `queryString` subtable.
+-- An assertion to look for a query parameter in a query string
 -- Parameter name comparison is done case-insensitive.
 -- @name queryparam
 -- @param name name of the query parameter to look up (case insensitive)
@@ -714,12 +897,9 @@ local function req_query_param(state, args)
   local req = rawget(state, "kong_request")
   assert(req, "'queryparam' assertion only works with a request object")
   local params
-  if type(req.queryString) == "table" then
-    -- it's a mockbin one
-    params = req.queryString
-  elseif type(req.args) == "table" then
-    -- it's a httpbin one
-    params = req.args
+  if type(req.uri_args) == "table" then
+    params = req.uri_args
+
   else
     error("No query parameters found in request object")
   end
@@ -749,7 +929,7 @@ luassert:register("assertion", "queryparam", req_query_param,
                   "assertion.req_query_param.positive")
 
 ---
--- Adds an assertion to look for a urlencoded form parameter in a mockbin request.
+-- Adds an assertion to look for a urlencoded form parameter in a request.
 -- Parameter name comparison is done case-insensitive. Use the `request` modifier to set
 -- the request to operate on.
 -- @name formparam
@@ -758,18 +938,17 @@ luassert:register("assertion", "queryparam", req_query_param,
 local function req_form_param(state, args)
   local param = args[1]
   local req = rawget(state, "kong_request")
-  assert(req, "'formparam' assertion can only be used with a mockbin/httpbin request object")
+  assert(req, "'formparam' assertion can only be used with a mock_upstream request object")
 
   local value
-  if req.postData then
-    -- mockbin request
-    value = lookup((req.postData or {}).params, param)
-  elseif type(req.url) == "string" and req.url:find("//httpbin.org", 1, true) then
-    -- hhtpbin request
-    value = lookup(req.form or {}, param)
+  if req.post_data
+  and (req.post_data.kind == "form" or req.post_data.kind == "multipart-form")
+  then
+    value = lookup(req.post_data.params or {}, param)
   else
-    error("Could not determine the request to be from either mockbin.com or httpbin.org")
+    error("Could not determine the request to be from either mock_upstream")
   end
+
   table.insert(args, 1, req)
   table.insert(args, 1, param)
   args.n = 2
@@ -833,10 +1012,9 @@ local function kong_exec(cmd, env)
 
   env.lua_package_path = env.lua_package_path .. ";" .. conf.lua_package_path
 
-  -- -- Do not try to load default plugins for Kong app
-  -- if not env.custom_plugins then
-  --   env.custom_plugins = "dummy,cache,rewriter"
-  -- end
+  if not env.plugins then
+    env.plugins = "bundled,dummy,cache,rewriter,error-handler-log"
+  end
 
   -- build Kong environment variables
   local env_vars = ""
@@ -889,6 +1067,50 @@ local function wait_for_invalidation(key, timeout)
   end, timeout)
 end
 
+--- Waits for the termination of a pid.
+-- @param pid_path Filename of the pid file.
+-- @param timeout (optional) in seconds, defaults to 10.
+local function wait_pid(pid_path, timeout, is_retry)
+  local pid
+  local fd = io.open(pid_path)
+  if fd then
+    pid = fd:read("*l")
+    fd:close()
+  end
+
+  if pid then
+    local max_time = ngx.now() + (timeout or 10)
+
+    repeat
+      if not pl_utils.execute("ps -p " .. pid .. " >/dev/null 2>&1") then
+        return
+      end
+      -- still running, wait some more
+      ngx.sleep(0.05)
+    until ngx.now() >= max_time
+
+    if is_retry then
+      return
+    end
+
+    -- Timeout reached: kill with SIGKILL
+    pl_utils.execute("kill -9 " .. pid .. " >/dev/null 2>&1")
+
+    -- Sanity check: check pid again, but don't loop.
+    wait_pid(pid_path, timeout, true)
+  end
+end
+
+-- Return the actual configuration running at the given prefix.
+-- It may differ from the default, as it may have been modified
+-- by the `env` table given to start_kong.
+-- @param prefix The prefix path where the kong instance is running
+-- @return The conf table of the running instance, or nil on error.
+local function get_running_conf(prefix)
+  local default_conf = conf_loader(nil, {prefix = prefix or conf.prefix})
+  return conf_loader(default_conf.kong_env)
+end
+
 ----------
 -- Exposed
 ----------
@@ -902,9 +1124,25 @@ return {
 
   -- Kong testing properties
   dao = dao,
+  db = db,
+  blueprints = blueprints,
+  get_db_utils = get_db_utils,
   bin_path = BIN_PATH,
   test_conf = conf,
   test_conf_path = TEST_CONF_PATH,
+  mock_upstream_hostname = MOCK_UPSTREAM_HOSTNAME,
+  mock_upstream_protocol = MOCK_UPSTREAM_PROTOCOL,
+  mock_upstream_host     = MOCK_UPSTREAM_HOST,
+  mock_upstream_port     = MOCK_UPSTREAM_PORT,
+  mock_upstream_url      = MOCK_UPSTREAM_PROTOCOL .. "://" ..
+                           MOCK_UPSTREAM_HOST .. ':' ..
+                           MOCK_UPSTREAM_PORT,
+
+  mock_upstream_ssl_protocol = MOCK_UPSTREAM_SSL_PROTOCOL,
+  mock_upstream_ssl_port     = MOCK_UPSTREAM_SSL_PORT,
+  mock_upstream_ssl_url      = MOCK_UPSTREAM_SSL_PROTOCOL .. "://" ..
+                               MOCK_UPSTREAM_HOST .. ':' ..
+                               MOCK_UPSTREAM_SSL_PORT,
 
   -- Kong testing helpers
   execute = exec,
@@ -914,14 +1152,17 @@ return {
   tcp_server = tcp_server,
   udp_server = udp_server,
   http_server = http_server,
+  get_proxy_ip = get_proxy_ip,
+  get_proxy_port = get_proxy_port,
   proxy_client = proxy_client,
   admin_client = admin_client,
   proxy_ssl_client = proxy_ssl_client,
+  admin_ssl_client = admin_ssl_client,
   prepare_prefix = prepare_prefix,
   clean_prefix = clean_prefix,
   wait_for_invalidation = wait_for_invalidation,
-  run_migrations = run_migrations,
-  
+  each_strategy = each_strategy,
+
   -- miscellaneous
   intercept = intercept,
   openresty_ver_num = openresty_ver_num(),
@@ -939,31 +1180,37 @@ return {
 
     return kong_exec("start --conf " .. TEST_CONF_PATH .. nginx_conf, env)
   end,
-  stop_kong = function(prefix, preserve_prefix)
+  stop_kong = function(prefix, preserve_prefix, preserve_tables)
     prefix = prefix or conf.prefix
+
+    local running_conf = get_running_conf(prefix)
+    if not running_conf then return end
+
     local ok, err = kong_exec("stop --prefix " .. prefix)
-    dao:truncate_tables()
+
+    wait_pid(running_conf.nginx_pid)
+    if not preserve_tables then
+      dao:truncate_tables()
+    end
     if not preserve_prefix then
       clean_prefix(prefix)
     end
     return ok, err
   end,
   -- Only use in CLI tests from spec/02-integration/01-cmd
-  kill_all = function(prefix)
+  kill_all = function(prefix, timeout)
     local kill = require "kong.cmd.utils.kill"
 
     dao:truncate_tables()
 
-    local default_conf = conf_loader(nil, {prefix = prefix or conf.prefix})
-    local running_conf = conf_loader(default_conf.kong_env)
+    local running_conf = get_running_conf(prefix)
     if not running_conf then return end
 
-    -- kill kong_tests.conf services
-    for _, pid_path in ipairs {running_conf.nginx_pid,
-                               running_conf.serf_pid} do
-      if pl_path.exists(pid_path) then
-        kill.kill(pid_path, "-TERM")
-      end
+    -- kill kong_tests.conf service
+    local pid_path = running_conf.nginx_pid
+    if pl_path.exists(pid_path) then
+      kill.kill(pid_path, "-TERM")
+      wait_pid(pid_path, timeout)
     end
-  end
+end
 }

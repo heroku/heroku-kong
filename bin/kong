@@ -4,4 +4,4 @@ require "luarocks.loader"
 
 package.path = "?/init.lua;"..package.path
 
-require("kong.cmd.init")(arg)
+require("kong.cmd")(arg)
