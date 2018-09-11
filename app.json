@@ -17,5 +17,11 @@
   }],
   "addons": [
     "heroku-postgresql"
-  ]
+  ],
+  "env": {
+    "KONG_HEROKU_ADMIN_KEY": {
+      "description": "A secret key for accessing Kong's Admin API via public proxy at /kong-admin",
+      "generator": "secret"
+    }
+  }
 }
