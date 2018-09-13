@@ -13,6 +13,10 @@ Deploy [Kong 0.14 Community Edition](https://konghq.com/kong-community-edition/)
   * [Deploy](#user-content-deploy)
   * [Connect local to Heroku app](#user-content-connect-local-to-heroku-app)
   * [Admin console](#user-content-admin-console)
+  * [Admin API](#user-content-admin-api)
+    * [The API Key](#user-content-admin-api-key)
+    * [Accessing](#user-content-accessing-the-external-admin-api)
+    * [Disabling](#user-content-disabling-the-external-admin-api)
   * [Proxy & protect the Admin API](#user-content-proxy--protect-the-admin-api)
   * [Upgrade guide](#user-content-upgrade-guide)
 * [Customization](#user-content-customization)
@@ -55,7 +59,7 @@ Use the deploy button to create a Kong app in your Heroku account:
 
 ### Connect local to Heroku app
 
-To use Admin console on a freshly-deployed app, clone and connect this repo (or your own fork) to the Heroku app:
+To make changes to the Kong app's source, clone and connect this repo (or your own fork) to the Heroku app:
 
 ```bash
 git clone https://github.com/heroku/heroku-kong.git
@@ -68,77 +72,60 @@ heroku info
 
 ### Admin console
 
-Use Kong CLI and the Admin API in a [one-off dyno](https://devcenter.heroku.com/articles/one-off-dynos):
+To gain local console access to Kong deployed on Heroku, see [ADMIN](ADMIN.md).
+
+Console access is primarily useful for performing `kong` CLI commands against the deployed app. Most administrative features do not require console access and instead are available through the Kong Admin API.
+
+### Admin API
+
+When this app is deployed to Heroku, it automatically provisions a protected, external-facing proxy to [Kong's Admin API](https://docs.konghq.com/0.14.x/admin-api/), secured by the `KONG_HEROKU_ADMIN_KEY` config var.
+
+#### Admin API key
+
+`KONG_HEROKU_ADMIN_KEY` is generated automatically when this app is [deployed using the automated app setup](#user-content-deploy).
+
+You can explicitly set a new admin key value:
 
 ```bash
-heroku run bash
-
-# Run Kong in the background of the one-off dyno:
-~ $ bin/background-start
-
-# Then, use `curl` to issue Admin API commands
-# and `jq` to format the output:
-~ $ curl http://$KONG_ADMIN_LISTEN | jq .
-
-# Example CLI commands:
-# (note some commands require the config file and others the prefix)
-~ $ kong migrations list -c $KONG_CONF
-~ $ kong health -p /app/.heroku
+heroku config:set KONG_HEROKU_ADMIN_KEY=xxxxx
+git commit --allow-empty -m 'deploy to set new admin key'
+git push heroku master
 ```
 
-### Proxy & protect the Admin API
-Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network. For Kong on Heroku, the Admin API listens privately on `localhost:8001`.
+⚠️ **Always set a unique, cryptographically strong key value.** A weak admin key may result in the proxy being compromised and abused by malicious actors.
 
-To make Kong Admin accessible from other locations, let's setup Kong itself to proxy its Admin API with key authentication, HTTPS-enforcement, and request rate & size limiting.
+#### Accessing the external Admin API
 
-From the [admin console](#user-content-admin-console):
+Make HTTPS requests using a tool like [`curl`](https://curl.haxx.se) or [Paw.cloud](https://paw.cloud):
+
+1. Base URL of the app's [Kong Admin API](https://docs.konghq.com/0.14.x/admin-api/) is `https://$APP_NAME.herokuapp.com/kong-admin`
+2. Set the current [admin key](#user-content-admin-api-key) in the `apikey` HTTP header
+
+For example, set the current admin key into a local shell variable:
+
 ```bash
-# Create the authenticated `/kong-admin` API, targeting the localhost port:
-curl http://localhost:8001/services/ -i -X POST \
-  --data 'name=kong-admin' \
-  --data 'protocol=http' \
-  --data 'port=8001' \
-  --data 'host=localhost'
-# Note the Service ID returned in previous response, use it in place of `$SERVICE_ID`.
-curl http://localhost:8001/plugins/ -i -X POST \
-  --data 'name=request-size-limiting' \
-  --data "config.allowed_payload_size=8" \
-  --data "service_id=$SERVICE_ID"
-curl http://localhost:8001/plugins/ -i -X POST \
-  --data 'name=rate-limiting' \
-  --data "config.minute=5" \
-  --data "service_id=$SERVICE_ID"
-curl http://localhost:8001/plugins/ -i -X POST \
-  --data 'name=key-auth' \
-  --data "config.hide_credentials=true" \
-  --data "service_id=$SERVICE_ID"
-curl http://localhost:8001/plugins/ -i -X POST \
-  --data 'name=acl' \
-  --data "config.whitelist=kong-admin" \
-  --data "service_id=$SERVICE_ID"
-curl http://localhost:8001/routes/ -i -X POST \
-  --data 'paths[]=/kong-admin' \
-  --data 'protocols[]=https' \
-  --data "service.id=$SERVICE_ID"
-
-# Create a consumer with username and authentication credentials:
-curl http://localhost:8001/consumers/ -i -X POST \
-  --data 'username=8th-wonder'
-curl http://localhost:8001/consumers/8th-wonder/acls -i -X POST \
-  --data 'group=kong-admin'
-curl http://localhost:8001/consumers/8th-wonder/key-auth -i -X POST -d ''
-# …this response contains the `"key"`, use it for `$ADMIN_KEY` below.
+KONG_HEROKU_ADMIN_KEY=`heroku config:get KONG_HEROKU_ADMIN_KEY`
 ```
 
-Now, access Kong's Admin API via the protected, public-facing proxy:
+Now use the following HTTP request style to interact with the [Kong's Admin API](https://docs.konghq.com/0.14.x/admin-api/):
 
-✏️ *Replace variables such as `$APP_NAME` with values for your unique deployment.*
+✏️ *Replace the variable `$APP_NAME` with value for your unique deployment.*
 
 ```bash
-# Set the request header:
-curl -H "apikey: $ADMIN_KEY" https://$APP_NAME.herokuapp.com/kong-admin/status
-# or use query params:
-curl https://$APP_NAME.herokuapp.com/kong-admin/status?apikey=$ADMIN_KEY
+curl -H "apikey: $KONG_HEROKU_ADMIN_KEY" https://$APP_NAME.herokuapp.com/kong-admin/status
+```
+
+#### Disabling the external Admin API
+
+If you prefer to only use the [console-based Admin API](ADMIN.md), then this externally-facing proxy can be disabled:
+
+```bash
+curl -H "apikey: $KONG_HEROKU_ADMIN_KEY" https://$APP_NAME.herokuapp.com/kong-admin/services/kong-admin/routes
+# For the returned Route's `id`,
+curl -H "apikey: $KONG_HEROKU_ADMIN_KEY" -X DELETE https://$APP_NAME.herokuapp.com/kong-admin/routes/$ROUTE_ID
+# Now there's no longer admin access!
+# Finally, clear out the old admin key value.
+heroku config:unset KONG_HEROKU_ADMIN_KEY
 ```
 
 ### Upgrade guide
