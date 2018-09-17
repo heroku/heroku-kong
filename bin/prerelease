@@ -5,7 +5,10 @@ set -u
 psql $DATABASE_URL -c "SELECT 1 FROM consumers"
 data_exists=$?
 
-if [ ! $data_exists -eq 0 ] && [ -n "$KONG_HEROKU_ADMIN_KEY" ]
+# Admin key is empty when the var is unset.
+admin_key="${KONG_HEROKU_ADMIN_KEY:-}"
+
+if [ ! $data_exists -eq 0 ] && [ -n "$admin_key" ]
 then
   echo "Loading base Kong config to enable secure proxy to Admin API"
   pg_restore --verbose --clean --no-acl --no-owner -d "$DATABASE_URL" $HOME/config/pg-heroku-admin.dump
@@ -13,9 +16,9 @@ fi
 
 set -e
 
-if [ -n "$KONG_HEROKU_ADMIN_KEY" ]
+if [ -n "$admin_key" ]
 then
   echo "Setting Admin API key to value of KONG_HEROKU_ADMIN_KEY"
   # This `id` matches the "kong-admin" keyauth_credentials record contained in "config/pg-heroku-admin.dump"
-  psql "$DATABASE_URL" -c "UPDATE keyauth_credentials SET key='$KONG_HEROKU_ADMIN_KEY' WHERE id='ac8af1d3-377a-41ae-9fd5-dbf98c599c5c';"
+  psql "$DATABASE_URL" -c "UPDATE keyauth_credentials SET key='${admin_key}' WHERE id='ac8af1d3-377a-41ae-9fd5-dbf98c599c5c';"
 fi
