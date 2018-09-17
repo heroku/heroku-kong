@@ -29,7 +29,7 @@ heroku run bash --app $APP_NAME
 ### Proxy & protect the Admin API
 Kong's Admin API has no built-in authentication. Its exposure must be limited to a restricted, private network. For Kong on Heroku, the Admin API listens privately on `localhost:8001`.
 
-To make Kong Admin accessible from other locations, let's setup Kong itself to proxy its Admin API with key authentication, HTTPS-enforcement, and request rate & size limiting.
+To make Kong Admin accessible from other locations, let's setup a secure [loopback proxy](https://docs.konghq.com/0.14.x/secure-admin-api/#kong-api-loopback) with key authentication, HTTPS-enforcement, and request rate & size limiting.
 
 ⚠️ **This [Admin API proxy is generated automatically](README.md#user-content-admin-api) during the initial deployment's release**, if the `KONG_HEROKU_ADMIN_KEY` config var is set, such as when [using the automated app setup](README.md#user-content-deploy).
 
