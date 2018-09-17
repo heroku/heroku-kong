@@ -77,7 +77,7 @@ Console access is primarily useful for performing `kong` CLI commands against th
 
 ### Admin API
 
-When this app is deployed to Heroku, it automatically provisions a protected, external-facing proxy to [Kong's Admin API](https://docs.konghq.com/0.14.x/admin-api/), secured by the `KONG_HEROKU_ADMIN_KEY` config var.
+When this app is deployed to Heroku, it automatically provisions a protected, external-facing [loopback proxy](https://docs.konghq.com/0.14.x/secure-admin-api/#kong-api-loopback) to [Kong's Admin API](https://docs.konghq.com/0.14.x/admin-api/), secured by the `KONG_HEROKU_ADMIN_KEY` config var.
 
 #### Admin API key
 
