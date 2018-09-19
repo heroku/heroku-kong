@@ -1,5 +1,5 @@
-Kong Heroku app
-===============
+Kong as a Heroku app
+====================
 Deploy [Kong 0.14 Community Edition](https://konghq.com/kong-community-edition/) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
 
 ⏫ **Upgrading from an earlier version?** See [Upgrade Guide](#user-content-upgrade-guide).
@@ -37,7 +37,7 @@ Deploy [Kong 0.14 Community Edition](https://konghq.com/kong-community-edition/)
 
 Purpose
 -------
-Kong is an extensible HTTP gateway/proxy application based on [OpenResty](http://openresty.org/en/), a web app framework built on the embedded [Lua language](http://www.lua.org) capabilities of the [Nginx web server](http://nginx.org/en/).
+Kong is an extensible [web proxy](https://en.m.wikipedia.org/wiki/Proxy_server) based on [OpenResty](http://openresty.org/en/), a web app framework built on the embedded [Lua language](http://www.lua.org) capabilities of the [Nginx web server](http://nginx.org/en/).
 
 With Heroku, Kong may be used for a variety of purposes. A few examples:
 
@@ -45,7 +45,7 @@ With Heroku, Kong may be used for a variety of purposes. A few examples:
   * enforce rate-limiting & request-size limits
   * create a single management point for domains & hostnames of public APIs.
 
-👓 See: [main Kong site](https://getkong.org) for more about this powerful API gateway.
+🦍 Visit [Kong HQ](https://konghq.com), the official resource for everything Kong.
 
 Usage
 -----
@@ -87,8 +87,6 @@ You can explicitly set a new admin key value:
 
 ```bash
 heroku config:set KONG_HEROKU_ADMIN_KEY=xxxxx
-git commit --allow-empty -m 'deploy to set new admin key'
-git push heroku master
 ```
 
 ⚠️ **Always set a unique, cryptographically strong key value.** A weak admin key may result in the proxy being compromised and abused by malicious actors.
