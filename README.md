@@ -127,6 +127,17 @@ heroku config:unset KONG_HEROKU_ADMIN_KEY
 
 ### Upgrade guide
 
+🚨 **Potentially breaking changes.** Please attempt upgrades on a staging system before upgrading production.
+
+#### The buildpack
+
+[Buildpack v6.0.0](https://github.com/heroku/heroku-buildpack-kong/releases) supports rapid deployments using a 
+pre-compiled Kong binary. Your pre-existing app may require changes continue functioning.
+
+▶️ See [UPGRADING the buildpack](https://github.com/heroku/heroku-buildpack-kong/blob/master/UPGRADING.md).
+
+#### Kong
+
 First, see [Kong's official upgrade path](https://github.com/Kong/kong/blob/master/UPGRADE.md).
 
 Then, take into account these facts about how this Kong on Heroku app works:

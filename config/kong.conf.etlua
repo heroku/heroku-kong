@@ -23,7 +23,7 @@
 # GENERAL
 #------------------------------------------------------------------------------
 
-prefix = /app/.heroku/           # Working directory. Equivalent to Nginx's
+prefix = /app/kong-runtime/      # Working directory. Equivalent to Nginx's
                                  # prefix path, containing temporary files
                                  # and logs.
                                  # Each Kong process must have a separate
