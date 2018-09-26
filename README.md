@@ -17,6 +17,7 @@ Deploy [Kong 0.14 Community Edition](https://konghq.com/kong-community-edition/)
     * [The API Key](#user-content-admin-api-key)
     * [Accessing](#user-content-accessing-the-external-admin-api)
     * [Disabling](#user-content-disabling-the-external-admin-api)
+  * [Terraform](#user-content-terraform)
   * [Upgrade guide](#user-content-upgrade-guide)
 * [Customization](#user-content-customization)
   * [Configuration](#user-content-configuration)
@@ -41,9 +42,9 @@ Kong is an extensible [web proxy](https://en.m.wikipedia.org/wiki/Proxy_server) 
 
 With Heroku, Kong may be used for a variety of purposes. A few examples:
 
-  * implemenent unified authentication for a suite of apps
-  * enforce rate-limiting & request-size limits
-  * create a single management point for domains & hostnames of public APIs.
+  * unify access control & observability for a suite of microservices
+  * enforce request rate & size limits globally, based on the endpoint, or the authenticated consumer
+  * create a single management point for routing requests based on DNS hostnames, URL paths, and HTTP headers
 
 🦍 Visit [Kong HQ](https://konghq.com), the official resource for everything Kong.
 
@@ -125,6 +126,15 @@ curl -H "apikey: $KONG_HEROKU_ADMIN_KEY" -X DELETE https://$APP_NAME.herokuapp.c
 heroku config:unset KONG_HEROKU_ADMIN_KEY
 ```
 
+### Terraform
+
+Kong may be provisioned and configured on Heroku using [Hashicorp Terraform](https://www.terraform.io) and a third-party [Kong provider](https://github.com/kevholditch/terraform-provider-kong).
+
+Using Terraform with Heroku today comes with some big advantages and some serious challenges. See these examples for more details about this pioneering architecture:
+
+* [Common Runtime microservices with a unified gateway](https://github.com/mars/terraform-heroku-common-kong-microservices)
+* [Private Spaces microservices with a unified gateway](https://github.com/mars/terraform-heroku-enterprise-kong-microservices)
+
 ### Upgrade guide
 
 🚨 **Potentially breaking changes.** Please attempt upgrades on a staging system before upgrading production.
@@ -151,6 +161,7 @@ Then, take into account these facts about how this Kong on Heroku app works:
    1. finally restart to the original formation size `heroku ps:scale web=$PREVIOUS_SIZE`
 
 🏥 Please [open an issue](https://github.com/heroku/heroku-kong/issues), if you encounter problems or have feedback about this process.
+
 
 Customization
 -------------
