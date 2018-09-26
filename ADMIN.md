@@ -23,7 +23,7 @@ heroku run bash --app $APP_NAME
 # (Note: some commands require the config file and others the prefix)
 # (Note: the `$KONG_CONF` variable is already defined)
 ~ $ kong migrations list -c $KONG_CONF
-~ $ kong health -p /app/.heroku
+~ $ kong health -p /app/kong-runtime
 ```
 
 ### Proxy & protect the Admin API
