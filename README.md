@@ -132,7 +132,7 @@ heroku config:unset KONG_HEROKU_ADMIN_KEY
 #### The buildpack
 
 [Buildpack v6.0.0](https://github.com/heroku/heroku-buildpack-kong/releases) supports rapid deployments using a 
-pre-compiled Kong binary. Your pre-existing app may require changes continue functioning.
+pre-compiled Kong binary. A pre-existing, customized app may require changes continue functioning, if the app explicitly uses the `/app/.heroku` directory prefix.
 
 ▶️ See [UPGRADING the buildpack](https://github.com/heroku/heroku-buildpack-kong/blob/master/UPGRADING.md).
 
