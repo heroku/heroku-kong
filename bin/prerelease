@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -u
+set +e
 
 # Only run this if Kong's tables have not be initialized.
 psql $DATABASE_URL -c "SELECT 1 FROM consumers"
