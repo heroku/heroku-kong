@@ -130,7 +130,7 @@ heroku config:unset KONG_HEROKU_ADMIN_KEY
 
 Kong may be provisioned and configured on Heroku using [Hashicorp Terraform](https://www.terraform.io) and a third-party [Kong provider](https://github.com/kevholditch/terraform-provider-kong).
 
-Using Terraform with Heroku today comes with some big advantages and some serious challenges. See these examples for more details about this pioneering architecture:
+See these examples of [Using Terraform with Heroku](https://devcenter.heroku.com/articles/using-terraform-with-heroku):
 
 * [Common Runtime microservices with a unified gateway](https://github.com/mars/terraform-heroku-common-kong-microservices)
 * [Private Spaces microservices with a unified gateway](https://github.com/mars/terraform-heroku-enterprise-kong-microservices)
