@@ -1,8 +1,6 @@
 Kong as a Heroku app
 ====================
-Deploy [Kong 0.14](https://konghq.com/kong-community-edition/) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
-
-🥚 Try the [Kong 1.0 release candidate](https://github.com/heroku/heroku-kong/tree/kong-1.0) with the `kong-1.0` branch.
+Deploy [Kong 1.0 release candidate 3](https://discuss.konghq.com/t/kong-1-0-rc3-available-for-testing/) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack, kong-1.0 branch](https://github.com/heroku/heroku-buildpack-kong/tree/kong-1.0).
 
 ⏫ **Upgrading from an earlier version?** See [Upgrade Guide](#user-content-upgrade-guide).
 
@@ -146,6 +144,8 @@ See these examples of [Using Terraform with Heroku](https://devcenter.heroku.com
 [Buildpack v6.0.0](https://github.com/heroku/heroku-buildpack-kong/releases) supports rapid deployments using a 
 pre-compiled Kong binary. A pre-existing, customized app may require changes continue functioning, if the app explicitly uses the `/app/.heroku` directory prefix.
 
+[Buildpack v7.0.0-rc\*](https://github.com/heroku/heroku-buildpack-kong/releases) supports Kong 1.0 release candidates. The "rc" releases only support upgrading from Kong 0.14, not earlier versions or other release candidates.
+
 ▶️ See [UPGRADING the buildpack](https://github.com/heroku/heroku-buildpack-kong/blob/master/UPGRADING.md).
 
 #### Kong
@@ -161,6 +161,7 @@ Then, take into account these facts about how this Kong on Heroku app works:
    1. [perform the upgrade](https://github.com/Kong/kong/blob/master/UPGRADE.md)
    1. allow release process to run
    1. finally restart to the original formation size `heroku ps:scale web=$PREVIOUS_SIZE`
+* once Kong 1.0 is successfully deployed, execute: `heroku run "kong migrations finish"`
 
 🏥 Please [open an issue](https://github.com/heroku/heroku-kong/issues), if you encounter problems or have feedback about this process.
 
