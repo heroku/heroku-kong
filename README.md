@@ -1,6 +1,6 @@
 Kong as a Heroku app
 ====================
-Deploy [Kong 0.14 Community Edition](https://konghq.com/kong-community-edition/) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong).
+Deploy [Kong 1.0 release candidate 2](https://discuss.konghq.com/t/kong-1-0rc2-available-for-testing/2142) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack, kong-1.0 branch](https://github.com/heroku/heroku-buildpack-kong/tree/kong-1.0).
 
 ⏫ **Upgrading from an earlier version?** See [Upgrade Guide](#user-content-upgrade-guide).
 
@@ -159,6 +159,7 @@ Then, take into account these facts about how this Kong on Heroku app works:
    1. [perform the upgrade](https://github.com/Kong/kong/blob/master/UPGRADE.md)
    1. allow release process to run
    1. finally restart to the original formation size `heroku ps:scale web=$PREVIOUS_SIZE`
+* once Kong 1.0 is successfully deployed, execute: `heroku run "kong migrations finish"`
 
 🏥 Please [open an issue](https://github.com/heroku/heroku-kong/issues), if you encounter problems or have feedback about this process.
 
