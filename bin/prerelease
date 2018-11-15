@@ -21,5 +21,5 @@ if [ -n "$admin_key" ]
 then
   echo "Setting Admin API key to value of KONG_HEROKU_ADMIN_KEY"
   # This `id` matches the "kong-admin" keyauth_credentials record contained in "config/pg-heroku-admin.dump"
-  psql "$DATABASE_URL" -c "UPDATE keyauth_credentials SET key='${admin_key}' WHERE id='ac8af1d3-377a-41ae-9fd5-dbf98c599c5c';"
+  psql "$DATABASE_URL" -c "UPDATE keyauth_credentials SET key='${admin_key}' WHERE id='d316d9e3-8c9c-4b75-9895-6f7721d933db';"
 fi
