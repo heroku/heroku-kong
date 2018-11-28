@@ -1,13 +1,16 @@
 local helpers = require "spec.helpers"
 local inspect = require "inspect"
 
-for _, strategy in helpers.each_strategy("postgres") do
-  describe("hello-world-header plugin", function()
+for _, strategy in helpers.each_strategy() do
+  describe("Plugin: hello-world-header [" .. strategy .. "]", function()
 
-    local bp = helpers.get_db_utils(strategy)
+    local bp
+    local service
 
     setup(function()
-      local service = bp.services:insert {
+      bp = helpers.get_db_utils(strategy)
+
+      service = bp.services:insert {
         name = "test-service",
         protocol = "https",
         port = 443,
@@ -25,7 +28,10 @@ for _, strategy in helpers.each_strategy("postgres") do
       })
 
       -- start Kong with your testing Kong configuration (defined in "spec.helpers")
-      assert(helpers.start_kong( { plugins = "bundled,hello-world-header" }))
+      assert(helpers.start_kong( {
+        database = strategy,
+        plugins  = "bundled,hello-world-header"
+      }))
 
       admin_client = helpers.admin_client()
     end)

@@ -1,15 +1,18 @@
 local helpers = require "spec.helpers"
 local json = require "cjson"
 
-for _, strategy in helpers.each_strategy("postgres") do
-  describe("ndfd-xml-as-json plugin", function()
+for _, strategy in helpers.each_strategy() do
+  describe("Plugin: ndfd-xml-as-json [" .. strategy .. "]", function()
 
     local proxy_client
     local admin_client
-    local bp = helpers.get_db_utils(strategy)
+    local bp
+    local service
 
     setup(function()
-      local service = bp.services:insert {
+      bp = helpers.get_db_utils(strategy)
+
+      service = bp.services:insert {
         name = "test-service",
         protocol = "https",
         port = 443,
@@ -28,7 +31,10 @@ for _, strategy in helpers.each_strategy("postgres") do
       })
 
       -- start Kong with your testing Kong configuration (defined in "spec.helpers")
-      assert(helpers.start_kong( { plugins = "bundled,ndfd-xml-as-json" }))
+      assert(helpers.start_kong( {
+        database = strategy,
+        plugins  = "bundled,ndfd-xml-as-json"
+      }))
 
       admin_client = helpers.admin_client()
     end)
