@@ -24,5 +24,10 @@
       "description": "A secret key for accessing Kong's Admin API via public proxy at /kong-admin",
       "generator": "secret"
     }
+  },
+  "environments": {
+    "test": {
+      "addons": ["heroku-postgresql:in-dyno"]
+    }
   }
 }
