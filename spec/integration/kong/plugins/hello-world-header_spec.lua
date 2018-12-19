@@ -5,10 +5,18 @@ for _, strategy in helpers.each_strategy() do
   describe("Plugin: hello-world-header [" .. strategy .. "]", function()
 
     local bp
+    local db
+    local proxy_client
     local service
 
-    setup(function()
-      bp = helpers.get_db_utils(strategy)
+    lazy_setup(function()
+      bp, db = helpers.get_db_utils(strategy, {
+        "plugins",
+        "routes",
+        "services",
+      }, {
+        "hello-world-header"
+      })
 
       service = bp.services:insert {
         name = "test-service",
@@ -24,24 +32,18 @@ for _, strategy in helpers.each_strategy() do
 
       bp.plugins:insert({
         name = "hello-world-header",
-        service_id = service.id
+        service = { id = service.id }
       })
 
       -- start Kong with your testing Kong configuration (defined in "spec.helpers")
-      assert(helpers.start_kong( {
+      assert(helpers.start_kong({
         database = strategy,
-        plugins  = "bundled,hello-world-header"
+        plugins  = "bundled,hello-world-header",
       }))
-
-      admin_client = helpers.admin_client()
     end)
 
-    teardown(function()
-      if admin_client then
-        admin_client:close()
-      end
-
-      helpers.stop_kong()
+    lazy_teardown(function()
+      helpers.stop_kong(nil, true)
     end)
 
     before_each(function()
