@@ -12,6 +12,7 @@
   "website": "https://getkong.org/",
   "repository": "https://github.com/heroku/heroku-kong.git",
   "success_url": "https://github.com/heroku/heroku-kong/blob/master/README.md#user-content-usage",
+  "stack": "heroku-18",
   "buildpacks": [{
     "url": "https://github.com/heroku/heroku-buildpack-kong.git"
   }],
@@ -22,6 +23,11 @@
     "KONG_HEROKU_ADMIN_KEY": {
       "description": "A secret key for accessing Kong's Admin API via public proxy at /kong-admin",
       "generator": "secret"
+    }
+  },
+  "environments": {
+    "test": {
+      "addons": ["heroku-postgresql:in-dyno"]
     }
   }
 }

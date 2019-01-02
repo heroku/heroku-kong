@@ -45,19 +45,19 @@ curl http://localhost:8001/services/ -i -X POST \
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
   --data "config.allowed_payload_size=8" \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=rate-limiting' \
   --data "config.minute=5" \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=key-auth' \
   --data "config.hide_credentials=true" \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=acl' \
   --data "config.whitelist=kong-admin" \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 curl http://localhost:8001/routes/ -i -X POST \
   --data 'paths[]=/kong-admin' \
   --data 'protocols[]=https' \

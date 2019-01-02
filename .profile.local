@@ -1,3 +1,4 @@
 export PATH="~/.luarocks/bin:${PATH:-}"
 export LUA_PATH="./lib/?.lua;./lib/?/init.lua;;"
 export LUA_CPATH="./lib/?.so;;"
+export KONG_TEST_DATABASE=postgres
