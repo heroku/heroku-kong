@@ -78,7 +78,7 @@ Console access is primarily useful for performing `kong` CLI commands against th
 
 ### Admin API
 
-When this app is deployed to Heroku, it automatically provisions a protected, external-facing [loopback proxy](https://docs.konghq.com/0.14.x/secure-admin-api/#kong-api-loopback) to [Kong's Admin API](https://docs.konghq.com/0.14.x/admin-api/), secured by the `KONG_HEROKU_ADMIN_KEY` config var.
+When this app is deployed to Heroku, it automatically provisions a protected, external-facing [loopback proxy](https://docs.konghq.com/1.0.x/secure-admin-api/#kong-api-loopback) to [Kong's Admin API](https://docs.konghq.com/1.0.x/admin-api/), secured by the `KONG_HEROKU_ADMIN_KEY` config var.
 
 #### Admin API key
 
@@ -96,7 +96,7 @@ heroku config:set KONG_HEROKU_ADMIN_KEY=xxxxx
 
 Make HTTPS requests using a tool like [`curl`](https://curl.haxx.se) or [Paw.cloud](https://paw.cloud):
 
-1. Base URL of the app's [Kong Admin API](https://docs.konghq.com/0.14.x/admin-api/) is `https://$APP_NAME.herokuapp.com/kong-admin`
+1. Base URL of the app's [Kong Admin API](https://docs.konghq.com/1.0.x/admin-api/) is `https://$APP_NAME.herokuapp.com/kong-admin`
 2. Set the current [admin key](#user-content-admin-api-key) in the `apikey` HTTP header
 
 For example, set the current admin key into a local shell variable:
@@ -105,7 +105,7 @@ For example, set the current admin key into a local shell variable:
 KONG_HEROKU_ADMIN_KEY=`heroku config:get KONG_HEROKU_ADMIN_KEY`
 ```
 
-Now use the following HTTP request style to interact with the [Kong's Admin API](https://docs.konghq.com/0.14.x/admin-api/):
+Now use the following HTTP request style to interact with the [Kong's Admin API](https://docs.konghq.com/1.0.x/admin-api/):
 
 ✏️ *Replace the variable `$APP_NAME` with value for your unique deployment.*
 
@@ -185,7 +185,7 @@ Kong is automatically configured at runtime with a `.profile.d` script:
 
 All file-based config may be overridden by setting `KONG_`-prefixed config vars, e.g. `heroku config:set KONG_LOG_LEVEL=debug`
 
-👓 See: [Kong 0.14 Configuration Reference](https://docs.konghq.com/0.14.x/configuration/)
+👓 See: [Kong 1.0 Configuration Reference](https://docs.konghq.com/1.0.x/configuration/)
 
 
 ### Kong plugins & additional Lua modules
@@ -241,7 +241,7 @@ curl http://localhost:8001/routes/ -i -X POST \
 
 ### Demo: custom plugin: hello-world-header
 
-[Custom plugins](https://docs.konghq.com/0.14.x/plugin-development/) allow you to observe and transform HTTP traffic using lightweight, high-performance [Lua](http://www.lua.org) code in Nginx [request processing contexts](https://docs.konghq.com/0.14.x/plugin-development/custom-logic/#available-request-contexts). Building on the [previous example](#user-content-demo-api-rate-limiting), let's add a simple plugin to Kong.
+[Custom plugins](https://docs.konghq.com/1.0.x/plugin-development/) allow you to observe and transform HTTP traffic using lightweight, high-performance [Lua](http://www.lua.org) code in Nginx [request processing contexts](https://docs.konghq.com/1.0.x/plugin-development/custom-logic/#available-request-contexts). Building on the [previous example](#user-content-demo-api-rate-limiting), let's add a simple plugin to Kong.
 
 [hello-world-header](lib/kong/plugins/hello-world-header/handler.lua) will add an HTTP response header **X-Hello-World** showing the date and a message from an environment variable.
 
@@ -373,15 +373,16 @@ To work with Kong locally on macOS X.
   * [a free account](https://signup.heroku.com)
 * Kong & its dependencies
   * as a single package install
-    * [Kong](https://getkong.org/install/osx/) for macOS via Homebrew
+    * [Kong](https://docs.konghq.com/install/macos/) for macOS
   * or, from source
     * [Lua](https://www.lua.org/versions.html) 5.1
     * [LuaRocks](https://github.com/luarocks/luarocks) 2.4.4
+    * [OpenSSL](https://www.openssl.org/source/) 1.1.1
     * [OpenResty](https://openresty.org/en/installation.html) 1.13.6.2
       * [Install from source](https://docs.konghq.com/install/source/)
-      * `./configure -j2 --with-openssl=~/Downloads/openssl-1.0.2o --with-ipv6 --with-http_realip_module --with-http_stub_status_module`
-    * [Kong](https://github.com/Kong/kong) 0.14.0
-      * `luarocks install kong 0.14.0 OPENSSL_DIR=/usr/local/opt/openssl CRYPTO_DIR=/usr/local/opt/openssl`
+      * `./configure -j2 --with-openssl=~/Downloads/openssl-1.1.1a --with-http_realip_module --with-http_stub_status_module`
+    * [Kong](https://github.com/Kong/kong) 1.0.0
+      * `luarocks install kong 1.0.0 OPENSSL_DIR=/usr/local/opt/openssl CRYPTO_DIR=/usr/local/opt/openssl`
 
 #### Clone & connect
 
@@ -429,7 +430,7 @@ Any test-specific Lua rocks should be specified in `Rockfile_test` file, so that
 Add tests in `spec/`:
 
   * Uses the [Busted testing framework](http://olivinelabs.com/busted)
-  * [Kong plugin testing guide](https://docs.konghq.com/0.14.x/plugin-development/tests/)
+  * [Kong plugin testing guide](https://docs.konghq.com/1.0.x/plugin-development/tests/)
   * [buildpack requirements for testing](https://github.com/heroku/heroku-buildpack-kong/blob/master/README.markdown#user-content-testing)
 
 ```bash
