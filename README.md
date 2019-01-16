@@ -229,11 +229,11 @@ curl http://localhost:8001/services/ -i -X POST \
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
   --data "config.allowed_payload_size=8" \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=rate-limiting' \
   --data "config.minute=5" \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 curl http://localhost:8001/routes/ -i -X POST \
   --data 'paths[]=/bay-lights' \
   --data "service.id=$SERVICE_ID"
@@ -250,7 +250,7 @@ Activate this plugin for the API:
 ```bash
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=hello-world-header' \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 ```
 
 Then, set a message through the Heroku config var:
@@ -326,14 +326,14 @@ curl http://localhost:8001/services/ -i -X POST \
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=request-size-limiting' \
   --data "config.allowed_payload_size=8" \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=rate-limiting' \
   --data "config.minute=5" \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 curl http://localhost:8001/plugins/ -i -X POST \
   --data 'name=ndfd-xml-as-json' \
-  --data "service_id=$SERVICE_ID"
+  --data "service.id=$SERVICE_ID"
 curl http://localhost:8001/routes/ -i -X POST \
   --data 'paths[]=/ndfd-max-temps' \
   --data "service.id=$SERVICE_ID"
