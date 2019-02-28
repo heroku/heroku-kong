@@ -14,7 +14,7 @@
   "success_url": "https://github.com/heroku/heroku-kong/blob/master/README.md#user-content-usage",
   "stack": "heroku-18",
   "buildpacks": [{
-    "url": "https://github.com/heroku/heroku-buildpack-kong.git"
+    "url": "https://github.com/heroku/heroku-buildpack-kong.git#kong-1.1.0"
   }],
   "addons": [
     "heroku-postgresql"
