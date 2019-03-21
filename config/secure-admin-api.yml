@@ -1,0 +1,40 @@
+# Kong declarative config
+# https://discuss.konghq.com/t/rfc-kong-native-declarative-config-format/2719
+
+# Metadata fields start with an underscore (_)
+# Fields that do not start with an underscore represent Kong entities and attributes
+
+# Matches Kong minimum version that supports the format
+_format_version: "1.1"
+_comment: This configures a protected, external-facing loopback proxy to Kong's Admin API, secured by the KONG_HEROKU_ADMIN_KEY config var. This config is preprocessed by the bin/postrelease script to expand shell-style interpolations, such as variables.
+
+services:
+- name: kong-admin
+  url: http://localhost:8001
+  routes:
+  - name: kong-admin
+    protocols:
+    - https
+    paths:
+    - /kong-admin
+  plugins:
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 8
+  - name: rate-limiting
+    config:
+      minute: 1000
+  - name: key-auth
+    config:
+      hide_credentials: true
+  - name: acl
+    config:
+      whitelist:
+      - kong-admin
+
+consumers:
+- username: heroku-admin
+  acls:
+  - group: kong-admin
+  keyauth_credentials:
+  - key: ${KONG_HEROKU_ADMIN_KEY}

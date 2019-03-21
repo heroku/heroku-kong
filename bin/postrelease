@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -eu
+
+# Admin key is empty when the var is unset.
+KONG_HEROKU_ADMIN_KEY="${KONG_HEROKU_ADMIN_KEY:-}"
+
+if [ -n "$KONG_HEROKU_ADMIN_KEY" ]
+then
+  echo "Setting up external Admin API secured by KONG_HEROKU_ADMIN_KEY"
+
+  # Replace environment variables with their values.
+  # Example: `$VAR` or `${VAR}` will be replaced with value of `VAR`.
+  eval "cat <<EOF
+$(<config/secure-admin-api.yml)
+EOF
+" > config/secure-admin-api-rendered.yml
+  
+  # Kong needs to be running for import.
+  bin/background-start
+  sleep 1
+  # Import config to Kong 1.1+
+  kong config db_import \
+    -c "${KONG_CONF:-config/kong.conf}" \
+    "config/secure-admin-api-rendered.yml"
+fi
