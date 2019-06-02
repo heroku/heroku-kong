@@ -6,7 +6,7 @@ Deploy [Kong 1.0](https://konghq.com/blog/kong-1-0-ga/) clusters to Heroku Commo
 
 🔬 This is a community proof-of-concept, [MIT license](LICENSE), provided "as is", without warranty of any kind.
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new-app?template=https://github.com/heroku/heroku-kong)
 
 * [Purpose](#user-content-purpose)
 * [Usage](#user-content-usage)
@@ -55,7 +55,7 @@ Usage
 
 Use the deploy button to create a Kong app in your Heroku account:
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new-app?template=https://github.com/heroku/heroku-kong)
 
 ### Connect local to Heroku app
 
