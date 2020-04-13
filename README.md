@@ -1,5 +1,8 @@
 Kong as a Heroku app
 ====================
+
+⚠️ **This project is no longer maintained.**
+
 Deploy [Kong 1.0](https://konghq.com/blog/kong-1-0-ga/) clusters to Heroku Common Runtime and Private Spaces using the [Kong buildpack](https://github.com/heroku/heroku-buildpack-kong/).
 
 ⏫ **Upgrading from an earlier version?** See [Upgrade Guide](#user-content-upgrade-guide).
